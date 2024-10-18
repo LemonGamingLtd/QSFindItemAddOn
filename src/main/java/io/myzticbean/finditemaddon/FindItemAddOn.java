@@ -50,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.kodysimpson.simpapi.colors.ColorTranslator;
 import me.kodysimpson.simpapi.command.CommandManager;
 import me.kodysimpson.simpapi.command.SubCommand;
+import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -69,7 +70,7 @@ import java.util.List;
  * @author myzticbean
  */
 @Slf4j
-public final class FindItemAddOn extends JavaPlugin {
+public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
 
     // ONLY FOR SNAPSHOT BUILDS
     // Change it to whenever you want your snapshot trial build to expire
@@ -77,11 +78,12 @@ public final class FindItemAddOn extends JavaPlugin {
     private static final int TRIAL_END_YEAR = 2024, TRIAL_END_MONTH = 5, TRIAL_END_DAY = 5;
     // ************************************************************************************
 
-    private static Plugin pluginInstance;
+    private static FindItemAddOn pluginInstance;
     public FindItemAddOn() { pluginInstance = this; }
-    public static Plugin getInstance() {
+    public static FindItemAddOn getInstance() {
         return pluginInstance;
     }
+
     public static String serverVersion;
     private static final int BS_PLUGIN_METRIC_ID = 12382;
     private static final int SPIGOT_PLUGIN_ID = 95104;
@@ -150,7 +152,7 @@ public final class FindItemAddOn extends JavaPlugin {
         initCommands();
 
         // Run plugin startup logic after server is done loading
-        Bukkit.getScheduler().scheduleSyncDelayedTask(FindItemAddOn.getInstance(), this::runPluginStartupTasks);
+        getScheduler().runTask(this::runPluginStartupTasks);
     }
 
     @Override
@@ -205,7 +207,7 @@ public final class FindItemAddOn extends JavaPlugin {
 
         // Initiate batch tasks
         Logger.logInfo("Registering tasks");
-        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Task15MinInterval(), 0, REPEATING_TASK_SCHEDULE_MINS);
+        getScheduler().runTaskTimer(new Task15MinInterval(), 1L, REPEATING_TASK_SCHEDULE_MINS);
 
         // init metrics
         Logger.logInfo("Registering anonymous bStats metrics");

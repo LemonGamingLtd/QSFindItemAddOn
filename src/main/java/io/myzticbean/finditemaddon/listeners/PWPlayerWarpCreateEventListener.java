@@ -32,7 +32,8 @@ public class PWPlayerWarpCreateEventListener implements Listener {
     @EventHandler
     public void onPlayerWarpCreate(PlayerWarpCreateEvent event) {
         // Issue #24 Fix: Converted updateWarpsOnEventCall() call to async
-        Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(),
-                () -> PlayerWarpsPlugin.updateWarpsOnEventCall(event.getPlayerWarp(), false));
+        FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() ->
+            PlayerWarpsPlugin.updateWarpsOnEventCall(event.getPlayerWarp(), false)
+        );
     }
 }

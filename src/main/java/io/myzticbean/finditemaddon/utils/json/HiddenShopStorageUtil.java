@@ -55,7 +55,7 @@ public class HiddenShopStorageUtil {
      * @param shop
      */
     public static void handleShopSearchVisibilityAsync(Shop shop, boolean hideShop) {
-        Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+        FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
             Iterator<ShopSearchActivityModel> shopSearchActivityIterator = ShopSearchActivityStorageUtil.getGlobalShopsList().iterator();
             int i = 0;
             while(shopSearchActivityIterator.hasNext()) {
@@ -80,7 +80,7 @@ public class HiddenShopStorageUtil {
      * @param shop
      */
     public static void handleShopSearchVisibilityAsync(com.ghostchu.quickshop.api.shop.Shop shop, boolean hideShop) {
-        Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+        FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
             Iterator<ShopSearchActivityModel> shopSearchActivityIterator = ShopSearchActivityStorageUtil.getGlobalShopsList().iterator();
             int i = 0;
             while(shopSearchActivityIterator.hasNext()) {

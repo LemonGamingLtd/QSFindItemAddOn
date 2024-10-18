@@ -30,7 +30,7 @@ public class Task15MinInterval implements Runnable {
     @Override
     public void run() {
         // v2.0.6.0 - Changed tasks to run in async thread
-        Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+        FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
             WarpUtils.updateWarps();
             ShopSearchActivityStorageUtil.syncShops();
         });

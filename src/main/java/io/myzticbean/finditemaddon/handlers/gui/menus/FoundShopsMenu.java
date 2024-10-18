@@ -335,8 +335,7 @@ public class FoundShopsMenu extends PaginatedMenu {
             player.sendMessage(ColorTranslator.translateColorCodes(
                     configProvider.PLUGIN_PREFIX + replaceDelayPlaceholder(tpDelayMsg, delay)));
         }
-        Bukkit.getScheduler().scheduleSyncDelayedTask(
-                FindItemAddOn.getInstance(),
+        FindItemAddOn.getInstance().getScheduler().runTaskLater(
                 () -> PaperLib.teleportAsync(player, locToTeleport, PlayerTeleportEvent.TeleportCause.PLUGIN),
                 delay * 20);
     }

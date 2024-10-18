@@ -44,7 +44,7 @@ public class UpdateChecker {
     }
 
     public void getLatestVersion(Consumer<String> consumer) {
-        Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+        FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
             try (
                 InputStream inputStream = new URL("https://api.spigotmc.org/legacy/update.php?resource=" + this.resourceId).openStream();
                 Scanner scanner = new Scanner(inputStream)

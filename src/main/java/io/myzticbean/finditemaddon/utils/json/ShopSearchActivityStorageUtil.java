@@ -235,7 +235,7 @@ public class ShopSearchActivityStorageUtil {
     }
 
     public static void addPlayerVisitEntryAsync(Location shopLocation, Player visitingPlayer) {
-        Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+        FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
             if(handleCooldownIfPresent(shopLocation, visitingPlayer)) {
                 Iterator<ShopSearchActivityModel> shopSearchActivityIterator = globalShopsList.iterator();
                 int i = 0;

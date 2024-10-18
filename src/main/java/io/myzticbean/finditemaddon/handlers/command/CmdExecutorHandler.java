@@ -18,8 +18,8 @@
  */
 package io.myzticbean.finditemaddon.handlers.command;
 
-import io.myzticbean.finditemaddon.config.ConfigSetup;
 import io.myzticbean.finditemaddon.FindItemAddOn;
+import io.myzticbean.finditemaddon.config.ConfigSetup;
 import io.myzticbean.finditemaddon.handlers.gui.menus.FoundShopsMenu;
 import io.myzticbean.finditemaddon.models.FoundShopItemModel;
 import io.myzticbean.finditemaddon.utils.enums.PlayerPermsEnum;
@@ -79,11 +79,11 @@ public class CmdExecutorHandler {
                     // If QS Hikari installed and Shop Cache feature available (>6), then run in async thread (Fix for Issue #12)
                     if(!FindItemAddOn.isQSReremakeInstalled() && FindItemAddOn.getQsApiInstance().isQSShopCacheImplemented()) {
                         Logger.logDebugInfo("Should run in async thread...");
-                        Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+                        FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
                             List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().fetchAllItemsFromAllShops(isBuying, player);
                             if(!searchResultList.isEmpty()) {
                                 FoundShopsMenu menu = new FoundShopsMenu(FindItemAddOn.getPlayerMenuUtility(player), searchResultList);
-                                Bukkit.getScheduler().runTask(FindItemAddOn.getInstance(), () -> menu.open(searchResultList));
+                                FindItemAddOn.getInstance().getScheduler().runTaskAtEntity(player, () -> menu.open(searchResultList));
                             }
                             else {
                                 if(!StringUtils.isEmpty(FindItemAddOn.getConfigProvider().NO_SHOP_FOUND_MSG)) {
@@ -96,9 +96,9 @@ public class CmdExecutorHandler {
                         // Else run in MAIN thread
                         List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().fetchAllItemsFromAllShops(isBuying, player);
                         if(!searchResultList.isEmpty()) {
-                            Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+                            FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
                                 FoundShopsMenu menu = new FoundShopsMenu(FindItemAddOn.getPlayerMenuUtility(player), searchResultList);
-                                Bukkit.getScheduler().runTask(FindItemAddOn.getInstance(), () -> menu.open(searchResultList));
+                                FindItemAddOn.getInstance().getScheduler().runTaskAtEntity(player, () -> menu.open(searchResultList));
                             });
                         }
                         else {
@@ -115,11 +115,11 @@ public class CmdExecutorHandler {
                         Logger.logDebugInfo("Material found: " + mat);
                         // If QS Hikari installed and Shop Cache feature available (>6), then run in async thread (Fix for Issue #12)
                         if(!FindItemAddOn.isQSReremakeInstalled() && FindItemAddOn.getQsApiInstance().isQSShopCacheImplemented()) {
-                            Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+                            FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
                                 List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().findItemBasedOnTypeFromAllShops(new ItemStack(mat), isBuying, player);
                                 if(!searchResultList.isEmpty()) {
                                     FoundShopsMenu menu = new FoundShopsMenu(FindItemAddOn.getPlayerMenuUtility(player), searchResultList);
-                                    Bukkit.getScheduler().runTask(FindItemAddOn.getInstance(), () -> menu.open(searchResultList));
+                                    FindItemAddOn.getInstance().getScheduler().runTaskAtEntity(player, () -> menu.open(searchResultList));
                                 }
                                 else {
                                     if(!StringUtils.isEmpty(FindItemAddOn.getConfigProvider().NO_SHOP_FOUND_MSG)) {
@@ -131,9 +131,9 @@ public class CmdExecutorHandler {
                         } else {
                             List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().findItemBasedOnTypeFromAllShops(new ItemStack(mat), isBuying, player);
                             if(!searchResultList.isEmpty()) {
-                                Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+                                FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
                                     FoundShopsMenu menu = new FoundShopsMenu(FindItemAddOn.getPlayerMenuUtility(player), searchResultList);
-                                    Bukkit.getScheduler().runTask(FindItemAddOn.getInstance(), () -> menu.open(searchResultList));
+                                    FindItemAddOn.getInstance().getScheduler().runTaskAtEntity(player, () -> menu.open(searchResultList));
                                 });
                             }
                             else {
@@ -148,11 +148,11 @@ public class CmdExecutorHandler {
                         Logger.logDebugInfo("Material not found! Performing query based search..");
                         // If QS Hikari installed and Shop Cache feature available (>6), then run in async thread (Fix for Issue #12)
                         if(!FindItemAddOn.isQSReremakeInstalled() && FindItemAddOn.getQsApiInstance().isQSShopCacheImplemented()) {
-                            Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+                            FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
                                 List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().findItemBasedOnDisplayNameFromAllShops(itemArg, isBuying, player);
                                 if(!searchResultList.isEmpty()) {
                                     FoundShopsMenu menu = new FoundShopsMenu(FindItemAddOn.getPlayerMenuUtility(player), searchResultList);
-                                    Bukkit.getScheduler().runTask(FindItemAddOn.getInstance(), () -> menu.open(searchResultList));
+                                    FindItemAddOn.getInstance().getScheduler().runTaskAtEntity(player, () -> menu.open(searchResultList));
                                 }
                                 else {
                                     // Invalid Material
@@ -165,9 +165,9 @@ public class CmdExecutorHandler {
                         } else {
                             List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().findItemBasedOnDisplayNameFromAllShops(itemArg, isBuying, player);
                             if(!searchResultList.isEmpty()) {
-                                Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
+                                FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
                                     FoundShopsMenu menu = new FoundShopsMenu(FindItemAddOn.getPlayerMenuUtility(player), searchResultList);
-                                    Bukkit.getScheduler().runTask(FindItemAddOn.getInstance(), () -> menu.open(searchResultList));
+                                    FindItemAddOn.getInstance().getScheduler().runTaskAtEntity(player, () -> menu.open(searchResultList));
                                 });
                             }
                             else {
