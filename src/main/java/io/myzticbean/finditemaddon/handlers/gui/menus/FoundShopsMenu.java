@@ -211,22 +211,24 @@ public class FoundShopsMenu extends PaginatedMenu {
         }
 
         // Find a safe location around the shop
-        Location locToTeleport = LocationUtils.findSafeLocationAroundShop(shopLocation, player);
-        if (locToTeleport == null) {
-            sendUnsafeAreaMessage(player);
-            return;
-        }
+        FindItemAddOn.getInstance().getScheduler().runTaskAtLocation(shopLocation, () -> {
+            Location locToTeleport = LocationUtils.findSafeLocationAroundShop(shopLocation, player);
+            if (locToTeleport == null) {
+                sendUnsafeAreaMessage(player);
+                return;
+            }
 
-        // Record the visit and set last location for Essentials
-        ShopSearchActivityStorageUtil.addPlayerVisitEntryAsync(shopLocation, player);
-        EssentialsXPlugin.setLastLocation(player);
+            // Record the visit and set last location for Essentials
+            ShopSearchActivityStorageUtil.addPlayerVisitEntryAsync(shopLocation, player);
+            EssentialsXPlugin.setLastLocation(player);
 
-        // Apply teleport delay if necessary, otherwise teleport immediately
-        if (shouldApplyTeleportDelay(player)) {
-            applyTeleportDelay(player, locToTeleport);
-        } else {
-            PaperLib.teleportAsync(player, locToTeleport, PlayerTeleportEvent.TeleportCause.PLUGIN);
-        }
+            // Apply teleport delay if necessary, otherwise teleport immediately
+            if (shouldApplyTeleportDelay(player)) {
+                applyTeleportDelay(player, locToTeleport);
+            } else {
+                PaperLib.teleportAsync(player, locToTeleport, PlayerTeleportEvent.TeleportCause.PLUGIN);
+            }
+        });
     }
 
     /**
