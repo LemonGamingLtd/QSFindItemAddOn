@@ -42,6 +42,7 @@ import io.myzticbean.finditemaddon.utils.warp.ResidenceUtils;
 import io.myzticbean.finditemaddon.utils.warp.WGRegionUtils;
 import io.papermc.lib.PaperLib;
 import me.kodysimpson.simpapi.colors.ColorTranslator;
+import net.kyori.adventure.text.Component;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -466,11 +467,23 @@ public class FoundShopsMenu extends PaginatedMenu {
      * @return An ItemStack representing the shop
      */
     private @NotNull ItemStack createShopItem(@NotNull FoundShopItemModel foundShop) {
+        final ItemStack foundShopItem = foundShop.getItem();
+        final ItemMeta foundShopItemMeta = foundShopItem.getItemMeta();
+
         // Create a new ItemStack based on the shop's item
-        ItemStack item = new ItemStack(foundShop.getItem().getType(), foundShop.getItem().getAmount());
+        ItemStack item = new ItemStack(foundShopItem.getType(), foundShopItem.getAmount());
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             meta = Bukkit.getItemFactory().getItemMeta(item.getType());
+        }
+
+        if (foundShopItemMeta != null) {
+            final String displayName = foundShopItemMeta.hasDisplayName() ?
+                foundShopItemMeta.getDisplayName() :
+                (foundShopItemMeta.hasItemName() ? foundShopItemMeta.getItemName() : null);
+            if (displayName != null) {
+                meta.setDisplayName(displayName);
+            }
         }
 
         List<String> lore = new ArrayList<>();
