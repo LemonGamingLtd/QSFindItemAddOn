@@ -18,7 +18,7 @@
  */
 package io.myzticbean.finditemaddon.utils;
 
-import io.myzticbean.finditemaddon.FindItemAddOn;
+import io.myzticbean.finditemaddon.dependencies.PlayerWarpsPlugin;
 import io.myzticbean.finditemaddon.utils.enums.PlayerPermsEnum;
 import io.myzticbean.finditemaddon.utils.log.Logger;
 import lombok.experimental.UtilityClass;
@@ -27,17 +27,34 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author myzticbean
  */
 @UtilityClass
 public class LocationUtils {
+
+    private static final List<LocationParser> locationParsers = new ArrayList<>() {{
+        add((player, locDataList) -> {
+            if (locDataList.size() <= 1)
+                return null;
+            World world = Bukkit.getWorld(locDataList.get(0));
+            if (world == null) {
+                return null;
+            }
+            int locX = Integer.parseInt(locDataList.get(1));
+            int locY = Integer.parseInt(locDataList.get(2));
+            int locZ = Integer.parseInt(locDataList.get(3));
+            return CompletableFuture.completedFuture(new Location(world, locX, locY, locZ));
+        });
+    }};
 
     private static final List<Material> damagingBlocks = new ArrayList<>();
     private static final List<Material> nonSuffocatingBlocks = new ArrayList<>();
@@ -61,11 +78,11 @@ public class LocationUtils {
         // Glass
         nonSuffocatingBlocks.add(Material.GLASS);
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_glass")).toList())
+            new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_glass")).toList())
         );
         // Glass Panes
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("glass_pane")).toList())
+            new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("glass_pane")).toList())
         );
         // Leaves
         nonSuffocatingBlocks.add(Material.ACACIA_LEAVES);
@@ -74,21 +91,21 @@ public class LocationUtils {
         nonSuffocatingBlocks.add(Material.JUNGLE_LEAVES);
         nonSuffocatingBlocks.add(Material.OAK_LEAVES);
         nonSuffocatingBlocks.add(Material.SPRUCE_LEAVES);
-        if(Bukkit.getServer().getVersion().contains("1.17")) {
+        if (Bukkit.getServer().getVersion().contains("1.17")) {
             nonSuffocatingBlocks.add(Material.AZALEA_LEAVES);
             nonSuffocatingBlocks.add(Material.FLOWERING_AZALEA_LEAVES);
         }
         // Slabs
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_slab")).toList())
+            new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_slab")).toList())
         );
         // Walled Signs
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_sign")).toList())
+            new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_sign")).toList())
         );
         // Stairs
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_stairs")).toList())
+            new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_stairs")).toList())
         );
         // MISC
         nonSuffocatingBlocks.add(Material.HONEY_BLOCK);
@@ -112,104 +129,99 @@ public class LocationUtils {
         // Creating a list of four block locations in 4 sides of the shop
         List<Location> possibleSafeLocList = new ArrayList<>();
         possibleSafeLocList.add(new Location(
-                roundedShopLoc.getWorld(),
-                roundedShopLoc.getX() + 1,
-                roundedShopLoc.getY(),
-                roundedShopLoc.getZ()
+            roundedShopLoc.getWorld(),
+            roundedShopLoc.getX() + 1,
+            roundedShopLoc.getY(),
+            roundedShopLoc.getZ()
         ));
         possibleSafeLocList.add(new Location(
-                roundedShopLoc.getWorld(),
-                roundedShopLoc.getX() - 1,
-                roundedShopLoc.getY(),
-                roundedShopLoc.getZ()
+            roundedShopLoc.getWorld(),
+            roundedShopLoc.getX() - 1,
+            roundedShopLoc.getY(),
+            roundedShopLoc.getZ()
         ));
         possibleSafeLocList.add(new Location(
-                roundedShopLoc.getWorld(),
-                roundedShopLoc.getX(),
-                roundedShopLoc.getY(),
-                roundedShopLoc.getZ() + 1
+            roundedShopLoc.getWorld(),
+            roundedShopLoc.getX(),
+            roundedShopLoc.getY(),
+            roundedShopLoc.getZ() + 1
         ));
         possibleSafeLocList.add(new Location(
-                roundedShopLoc.getWorld(),
-                roundedShopLoc.getX(),
-                roundedShopLoc.getY(),
-                roundedShopLoc.getZ() - 1
+            roundedShopLoc.getWorld(),
+            roundedShopLoc.getX(),
+            roundedShopLoc.getY(),
+            roundedShopLoc.getZ() - 1
         ));
-        for(Location loc_i : possibleSafeLocList) {
+        for (Location loc_i : possibleSafeLocList) {
             Logger.logDebugInfo("Possible safe location: " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ());
-            if(loc_i.getBlock().getType().equals(FindItemAddOn.getQsApiInstance().getShopSignMaterial())) {
+            if (loc_i.getBlock().getType().name().endsWith("_SIGN")) {
                 Logger.logDebugInfo("Shop sign block found at " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ());
                 // Adding a check for a safe location check bypass permission
-                if(player.hasPermission(PlayerPermsEnum.FINDITEM_SHOPTP_BYPASS_SAFETYCHECK.value())) {
+                if (player.hasPermission(PlayerPermsEnum.FINDITEM_SHOPTP_BYPASS_SAFETYCHECK.value())) {
                     Location blockBelow = new Location(
-                            loc_i.getWorld(),
-                            loc_i.getBlockX(),
-                            loc_i.getBlockY() - 1,
-                            loc_i.getBlockZ()
+                        loc_i.getWorld(),
+                        loc_i.getBlockX(),
+                        loc_i.getBlockY() - 1,
+                        loc_i.getBlockZ()
                     );
                     loc_i = lookAt(getRoundedDestination(new Location(
-                            blockBelow.getWorld(),
-                            blockBelow.getX(),
-                            blockBelow.getY() + 1,
-                            blockBelow.getZ()
+                        blockBelow.getWorld(),
+                        blockBelow.getX(),
+                        blockBelow.getY() + 1,
+                        blockBelow.getZ()
                     )), roundedShopLoc);
                     return loc_i;
                 }
                 // check if the block above is suffocating
                 Location blockAbove = new Location(
-                        loc_i.getWorld(),
-                        loc_i.getBlockX(),
-                        loc_i.getBlockY() + 1,
-                        loc_i.getBlockZ());
+                    loc_i.getWorld(),
+                    loc_i.getBlockX(),
+                    loc_i.getBlockY() + 1,
+                    loc_i.getBlockZ());
                 Logger.logDebugInfo("Block above shop sign: "
-                        + blockAbove.getX() + ", " + blockAbove.getY() + ", " + blockAbove.getZ());
-                if(!isBlockSuffocating(blockAbove)) {
+                    + blockAbove.getX() + ", " + blockAbove.getY() + ", " + blockAbove.getZ());
+                if (!isBlockSuffocating(blockAbove)) {
                     Location blockBelow = null;
                     boolean safeLocFound = false;
-                    for(int i = 1; i <= BELOW_SAFE_BLOCK_CHECK_LIMIT; i++) {
+                    for (int i = 1; i <= BELOW_SAFE_BLOCK_CHECK_LIMIT; i++) {
                         blockBelow = new Location(
-                                loc_i.getWorld(),
-                                loc_i.getBlockX(),
-                                loc_i.getBlockY() - i,
-                                loc_i.getBlockZ()
+                            loc_i.getWorld(),
+                            loc_i.getBlockX(),
+                            loc_i.getBlockY() - i,
+                            loc_i.getBlockZ()
                         );
                         Logger.logDebugInfo("Block below shop sign: "
-                                + blockBelow.getBlock().getType() + " " + blockBelow.getX() + ", " + blockBelow.getY() + ", " + blockBelow.getZ());
-                        if(blockBelow.getBlock().getType().equals(Material.AIR)
+                            + blockBelow.getBlock().getType() + " " + blockBelow.getX() + ", " + blockBelow.getY() + ", " + blockBelow.getZ());
+                        if (blockBelow.getBlock().getType().equals(Material.AIR)
                             || blockBelow.getBlock().getType().equals(Material.CAVE_AIR)
                             || blockBelow.getBlock().getType().equals(Material.VOID_AIR)
-                            || blockBelow.getBlock().getType().equals(FindItemAddOn.getQsApiInstance().getShopSignMaterial())) {
+                            || blockBelow.getBlock().getType().name().endsWith("_SIGN")) {
                             // do nothing and let the loop run
                             Logger.logDebugInfo("Shop or Air found below");
-                        }
-                        else if(!isBlockDamaging(blockBelow)) {
+                        } else if (!isBlockDamaging(blockBelow)) {
                             Logger.logDebugInfo("Safe block found!");
                             safeLocFound = true;
                             break;
-                        }
-                        else {
+                        } else {
                             break;
                         }
                     }
-                    if(safeLocFound) {
+                    if (safeLocFound) {
                         loc_i = lookAt(getRoundedDestination(new Location(
-                                blockBelow.getWorld(),
-                                blockBelow.getX(),
-                                blockBelow.getY() + 1,
-                                blockBelow.getZ()
+                            blockBelow.getWorld(),
+                            blockBelow.getX(),
+                            blockBelow.getY() + 1,
+                            blockBelow.getZ()
                         )), roundedShopLoc);
                         return loc_i;
-                    }
-                    else {
+                    } else {
                         return null;
                     }
-                }
-                else {
+                } else {
                     Logger.logDebugInfo("Block above shop sign found not air. Block type: " + blockAbove.getBlock().getType());
                     return null;
                 }
-            }
-            else {
+            } else {
                 Logger.logDebugInfo("Block not shop sign. Block type: " + loc_i.getBlock().getType());
             }
         }
@@ -264,8 +276,29 @@ public class LocationUtils {
     private static Location getRoundedDestination(final Location loc) {
         World world = loc.getWorld();
         int x = loc.getBlockX();
-        int y = (int)Math.round(loc.getY());
+        int y = (int) Math.round(loc.getY());
         int z = loc.getBlockZ();
-        return new Location(world, (double)x + 0.5D, (double)y, (double)z + 0.5D, loc.getYaw(), loc.getPitch());
+        return new Location(world, (double) x + 0.5D, (double) y, (double) z + 0.5D, loc.getYaw(), loc.getPitch());
+    }
+
+    @Nullable
+    public static CompletableFuture<Location> parseLocation(@NotNull Player player, @NotNull List<String> locDataList) {
+        for (final LocationParser locationParser : locationParsers) {
+            final CompletableFuture<Location> location = locationParser.parseLocation(player, locDataList);
+            if (location != null) {
+                return location;
+            }
+        }
+        return null;
+    }
+
+    public static void registerLocationParser(@NotNull LocationParser locationParser) {
+        locationParsers.add(locationParser);
+    }
+
+    @FunctionalInterface
+    public interface LocationParser {
+        @Nullable
+        CompletableFuture<Location> parseLocation(@NotNull Player player, @NotNull List<String> locDataList);
     }
 }
