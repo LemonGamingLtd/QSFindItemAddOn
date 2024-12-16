@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -41,7 +42,7 @@ import java.util.concurrent.CompletableFuture;
 @UtilityClass
 public class LocationUtils {
 
-    private static final List<LocationParser> locationParsers = new ArrayList<>() {{
+    private static final List<LocationParser> locationParsers = new LinkedList<>() {{
         add((player, locDataList) -> {
             if (locDataList.size() <= 1)
                 return null;
@@ -286,6 +287,7 @@ public class LocationUtils {
         for (final LocationParser locationParser : locationParsers) {
             final CompletableFuture<Location> location = locationParser.parseLocation(player, locDataList);
             if (location != null) {
+                Logger.logInfo("Fulfilled location with parser: " + locationParser.getClass().getSimpleName());
                 return location;
             }
         }

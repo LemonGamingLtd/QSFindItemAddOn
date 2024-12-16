@@ -5,6 +5,7 @@ import io.myzticbean.finditemaddon.utils.log.Logger;
 import lombok.experimental.UtilityClass;
 import ltd.lemongaming.slimeskyblock.SlimeSkyblock;
 import ltd.lemongaming.slimeskyblock.island.enums.Dimension;
+import ltd.lemongaming.slimeskyblock.island.enums.PermissionType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -32,16 +33,23 @@ public class SlimeSkyblockPlugin {
             final String worldName = locDataList.get(0);
             final UUID islandId = getIslandIdFromWorldName(worldName);
             if (islandId == null) {
+                Logger.logWarning("Could not find island for world name: " + worldName);
                 return null;
             }
 
             final CompletableFuture<Location> location = new CompletableFuture<>();
             plugin.getIslandDistributedExecutor().executeIslandSynchronized(player, islandId, island -> {
-                final World world = Bukkit.getWorld(worldName);
-                int locX = Integer.parseInt(locDataList.get(1));
-                int locY = Integer.parseInt(locDataList.get(2));
-                int locZ = Integer.parseInt(locDataList.get(3));
-                location.complete(new Location(world, locX, locY, locZ));
+                if (island == null || !island.hasPermission(player, PermissionType.WARP)) {
+                    return;
+                }
+
+                island.sendPlayerToIslandHome(player).thenAccept(__ -> {
+                    final World world = Bukkit.getWorld(worldName);
+                    int locX = Integer.parseInt(locDataList.get(1));
+                    int locY = Integer.parseInt(locDataList.get(2));
+                    int locZ = Integer.parseInt(locDataList.get(3));
+                    location.complete(new Location(world, locX, locY, locZ));
+                });
             });
             return location;
         });
