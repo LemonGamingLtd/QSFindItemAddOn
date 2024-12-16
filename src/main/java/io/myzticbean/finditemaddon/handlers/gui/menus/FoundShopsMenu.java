@@ -197,7 +197,7 @@ public class FoundShopsMenu extends PaginatedMenu {
             return;
         }
 
-        final CompletableFuture<Location> shopLocation = parseShopLocation(locDataList);
+        final CompletableFuture<Location> shopLocation = parseShopLocation(player, locDataList);
         if (shopLocation == null) {
             return;
         }
@@ -265,7 +265,7 @@ public class FoundShopsMenu extends PaginatedMenu {
     private void handleCustomCommands(Player player, List<String> locDataList) {
         if (configProvider.CUSTOM_CMDS_RUN_ENABLED && !configProvider.CUSTOM_CMDS_LIST.isEmpty()
             && locDataList.size() > 1) {
-            CompletableFuture<Location> shopLocation = parseShopLocation(locDataList);
+            CompletableFuture<Location> shopLocation = parseShopLocation(player, locDataList);
             if (shopLocation == null)
                 return;
 
