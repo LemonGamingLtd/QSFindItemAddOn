@@ -97,6 +97,9 @@ public class FindItemCmdHikariImpl implements CommandHandler<Player> {
             @NotNull String[] args) {
         if (itemsList.isEmpty()) {
             for (Material mat : Material.values()) {
+                if (!mat.isItem()) {
+                    continue;
+                }
                 itemsList.add(mat.name());
             }
         }

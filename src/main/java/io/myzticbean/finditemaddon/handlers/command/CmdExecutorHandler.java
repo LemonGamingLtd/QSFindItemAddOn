@@ -111,7 +111,7 @@ public class CmdExecutorHandler {
                 }
                 else {
                     Material mat = Material.getMaterial(itemArg.toUpperCase());
-                    if(mat != null) {
+                    if(mat != null && mat.isItem()) {
                         Logger.logDebugInfo("Material found: " + mat);
                         // If QS Hikari installed and Shop Cache feature available (>6), then run in async thread (Fix for Issue #12)
                         if(!FindItemAddOn.isQSReremakeInstalled() && FindItemAddOn.getQsApiInstance().isQSShopCacheImplemented()) {

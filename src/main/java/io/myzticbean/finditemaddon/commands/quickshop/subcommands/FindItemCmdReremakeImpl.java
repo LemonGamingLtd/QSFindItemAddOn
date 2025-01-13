@@ -88,6 +88,9 @@ public class FindItemCmdReremakeImpl implements CommandHandler<Player> {
     public @Nullable List<String> onTabComplete(@NotNull Player sender, @NotNull String commandLabel, @NotNull String[] args) {
         if(itemsList.isEmpty()) {
             for(Material mat : Material.values()) {
+                if (!mat.isItem()) {
+                    continue;
+                }
                 itemsList.add(mat.name());
             }
         }
