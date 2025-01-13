@@ -93,6 +93,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
             // check for quickshop hikari internal per-shop based search permission
             if(shopIterator.playerAuthorize(searchingPlayer.getUniqueId(), BuiltInShopPermission.SEARCH)
                     // check for blacklisted worlds
+                    && shopIterator.getLocation().isWorldLoaded() // fix for folia
                     && (!FindItemAddOn.getConfigProvider().getBlacklistedWorlds().contains(shopIterator.getLocation().getWorld())
                     && shopIterator.getItem().getType().equals(item.getType())
                     && (toBuy ? shopIterator.isSelling() : shopIterator.isBuying()))
@@ -144,6 +145,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
         for(Shop shopIterator : allShops) {
             // check for quickshop hikari internal per-shop based search permission
             if(shopIterator.playerAuthorize(searchingPlayer.getUniqueId(), BuiltInShopPermission.SEARCH)
+                    && shopIterator.getLocation().isWorldLoaded() // fix for folia
                     // check for blacklisted worlds
                     && !FindItemAddOn.getConfigProvider().getBlacklistedWorlds().contains(shopIterator.getLocation().getWorld())
                     // match the item based on query
@@ -182,6 +184,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
         for(Shop shopIterator : allShops) {
             // check for quickshop hikari internal per-shop based search permission
             if(shopIterator.playerAuthorize(searchingPlayer.getUniqueId(), BuiltInShopPermission.SEARCH)
+                    && shopIterator.getLocation().isWorldLoaded() // fix for folia
                     // check for blacklisted worlds
                     && (!FindItemAddOn.getConfigProvider().getBlacklistedWorlds().contains(shopIterator.getLocation().getWorld())
                     && (toBuy ? shopIterator.isSelling() : shopIterator.isBuying()))
@@ -248,6 +251,9 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
         List<ShopSearchActivityModel> tempGlobalShopsList = new ArrayList<>();
         for (Shop shop_i : getAllShops()) {
             Location shopLoc = shop_i.getLocation();
+            if (!shopLoc.isWorldLoaded()) { // fix for folia
+                continue;
+            }
             tempGlobalShopsList.add(new ShopSearchActivityModel(
                     shopLoc.getWorld().getName(),
                     shopLoc.getX(),
