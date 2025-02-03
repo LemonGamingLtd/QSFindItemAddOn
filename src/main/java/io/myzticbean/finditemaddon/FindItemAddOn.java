@@ -36,6 +36,7 @@ import io.myzticbean.finditemaddon.listeners.PWPlayerWarpCreateEventListener;
 import io.myzticbean.finditemaddon.listeners.PWPlayerWarpRemoveEventListener;
 import io.myzticbean.finditemaddon.listeners.PlayerCommandSendEventListener;
 import io.myzticbean.finditemaddon.listeners.PlayerJoinEventListener;
+import io.myzticbean.finditemaddon.listeners.PlayerQuitEventListener;
 import io.myzticbean.finditemaddon.listeners.PluginEnableEventListener;
 import io.myzticbean.finditemaddon.metrics.Metrics;
 import io.myzticbean.finditemaddon.quickshop.QSApi;
@@ -244,6 +245,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
         this.getServer().getPluginManager().registerEvents(new PlayerCommandSendEventListener(), this);
         this.getServer().getPluginManager().registerEvents(new MenuListener(), this);
         this.getServer().getPluginManager().registerEvents(new PlayerJoinEventListener(), this);
+        this.getServer().getPluginManager().registerEvents(new PlayerQuitEventListener(), this);
     }
     private void initExternalPluginEventListeners() {
         Logger.logInfo("Registering external plugin event listeners");
@@ -267,6 +269,10 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
             playerMenuUtilityMap.put(p, playerMenuUtility);
             return playerMenuUtility;
         }
+    }
+
+    public static boolean removePlayerMenuUtility(Player p){
+        return playerMenuUtilityMap.remove(p) != null;
     }
 
     public static boolean getPluginOutdated() {
