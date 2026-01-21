@@ -26,6 +26,7 @@ import io.myzticbean.finditemaddon.commands.simpapi.SellSubCmd;
 import io.myzticbean.finditemaddon.config.ConfigProvider;
 import io.myzticbean.finditemaddon.config.ConfigSetup;
 import io.myzticbean.finditemaddon.dependencies.EssentialsXPlugin;
+import io.myzticbean.finditemaddon.dependencies.GPFlagsPlugin;
 import io.myzticbean.finditemaddon.dependencies.PlayerWarpsPlugin;
 import io.myzticbean.finditemaddon.dependencies.ResidencePlugin;
 import io.myzticbean.finditemaddon.dependencies.SlimeSkyblockPlugin;
@@ -205,6 +206,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
         WGPlugin.setup();
         ResidencePlugin.setup();
         SlimeSkyblockPlugin.setup();
+        GPFlagsPlugin.setup();
 
         initExternalPluginEventListeners();
 

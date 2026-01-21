@@ -23,6 +23,7 @@ import com.olziedev.playerwarps.api.warp.Warp;
 import io.myzticbean.finditemaddon.FindItemAddOn;
 import io.myzticbean.finditemaddon.config.ConfigProvider;
 import io.myzticbean.finditemaddon.dependencies.EssentialsXPlugin;
+import io.myzticbean.finditemaddon.dependencies.GPFlagsPlugin;
 import io.myzticbean.finditemaddon.dependencies.PlayerWarpsPlugin;
 import io.myzticbean.finditemaddon.dependencies.ResidencePlugin;
 import io.myzticbean.finditemaddon.dependencies.WGPlugin;
@@ -214,6 +215,12 @@ public class FoundShopsMenu extends PaginatedMenu {
                 return;
             }
 
+            boolean isBanned = GPFlagsPlugin.isPlayerBannedFromClaim(player, location);
+            if (isBanned) {
+                sendBannedFromClaimMessage(player);
+                return;
+            }
+
             // Find a safe location around the shop
             FindItemAddOn.getInstance().getScheduler().runTaskAtLocation(location, () -> {
                 Location locToTeleport = LocationUtils.findSafeLocationAroundShop(location, player);
@@ -311,6 +318,18 @@ public class FoundShopsMenu extends PaginatedMenu {
         if (!StringUtils.isEmpty(configProvider.UNSAFE_SHOP_AREA_MSG)) {
             player.sendMessage(ColorTranslator.translateColorCodes(configProvider.PLUGIN_PREFIX
                 + configProvider.UNSAFE_SHOP_AREA_MSG));
+        }
+    }
+
+    /**
+     * Sends a banned from claim message to the player
+     *
+     * @param player The player to send the message to
+     */
+    private void sendBannedFromClaimMessage(Player player) {
+        if (!StringUtils.isEmpty(configProvider.BANNED_FROM_CLAIM_MSG)) {
+            player.sendMessage(ColorTranslator.translateColorCodes(configProvider.PLUGIN_PREFIX
+                + configProvider.BANNED_FROM_CLAIM_MSG));
         }
     }
 

@@ -126,12 +126,16 @@
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
         <repository>
+            <id>lemongaming-repo</id>
+            <url>https://repo.lemongaming.ltd/repository/maven-public/</url>
+        </repository>
+        <repository>
             <id>codemc-public</id>
             <url>https://repo.codemc.io/repository/maven-public/</url>
         </repository>
         <repository>
             <id>papermc</id>
-            <url>https://papermc.io/repo/repository/maven-public/</url>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
         <repository>
             <id>essentials-releases</id>
@@ -152,10 +156,6 @@
         <repository>
             <id>central</id>
             <url>https://repo.maven.apache.org/maven2/</url>
-        </repository>
-        <repository>
-            <id>lemongaming-repo</id>
-            <url>https://repo.codemc.io/repository/maven-public/</url>
         </repository>
     </repositories>
 
@@ -362,7 +362,7 @@
         <dependency>
             <groupId>com.github.KodySimpson</groupId>
             <artifactId>SimpAPI</artifactId>
-            <version>4.5.5</version>
+            <version>4.6.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
@@ -411,9 +411,9 @@
         <dependency>
             <groupId>me.ryanhamshire</groupId>
             <artifactId>GPFlags</artifactId>
-            <version>5.13.4</version>
+            <version>5.13.8</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/GPFlags-5.13.4.jar</systemPath>
+            <systemPath>${project.basedir}/lib/GPFlags-5.13.8.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.github.NahuLD.folia-scheduler-wrapper</groupId>
@@ -424,7 +424,7 @@
         <dependency>
             <groupId>ltd.lemongaming</groupId>
             <artifactId>SlimeSkyblock</artifactId>
-            <version>3.4.0</version>
+            <version>3.0.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

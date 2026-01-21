@@ -47,6 +47,7 @@ player-shop-teleportation:
     click-to-teleport-message: "&6&lClick to teleport to the shop!"
     shop-tp-no-permission-message: "&cYou don't have permission to teleport to shop!"
     unsafe-shop-area-message: "&cThe area around the shop is unsafe!"
+    banned-from-claim-message: "&cYou are banned from entering that claim!"
     tp-delay-in-seconds: 0
     tp-delay-message: "&6You will be teleported in &c{DELAY} &6seconds..."
     tp-to-own-shop-no-permission-message: "&cYou cannot teleport to your own shop!"
