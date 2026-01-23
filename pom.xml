@@ -463,9 +463,9 @@
         <dependency>
             <groupId>me.ryanhamshire</groupId>
             <artifactId>GPFlags</artifactId>
-            <version>5.13.4</version>
+            <version>5.13.8</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/GPFlags-5.13.4.jar</systemPath>
+            <systemPath>${project.basedir}/lib/GPFlags-5.13.8.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>world.bentobox</groupId>
