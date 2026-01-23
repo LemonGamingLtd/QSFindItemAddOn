@@ -12,6 +12,7 @@ softdepend:
   - WorldGuard
   - Essentials
   - Residence
+  - BentoBox
   - SlimeSkyblock
 
 permissions:

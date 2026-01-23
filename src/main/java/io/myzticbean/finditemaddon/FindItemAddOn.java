@@ -31,20 +31,16 @@ import io.myzticbean.finditemaddon.dependencies.PlayerWarpsPlugin;
 import io.myzticbean.finditemaddon.dependencies.ResidencePlugin;
 import io.myzticbean.finditemaddon.dependencies.SlimeSkyblockPlugin;
 import io.myzticbean.finditemaddon.dependencies.WGPlugin;
+import io.myzticbean.finditemaddon.dependencies.BentoBoxPlugin;
 import io.myzticbean.finditemaddon.handlers.gui.PlayerMenuUtility;
-import io.myzticbean.finditemaddon.listeners.MenuListener;
-import io.myzticbean.finditemaddon.listeners.PWPlayerWarpCreateEventListener;
-import io.myzticbean.finditemaddon.listeners.PWPlayerWarpRemoveEventListener;
-import io.myzticbean.finditemaddon.listeners.PlayerCommandSendEventListener;
-import io.myzticbean.finditemaddon.listeners.PlayerJoinEventListener;
-import io.myzticbean.finditemaddon.listeners.PlayerQuitEventListener;
-import io.myzticbean.finditemaddon.listeners.PluginEnableEventListener;
+import io.myzticbean.finditemaddon.listeners.*;
 import io.myzticbean.finditemaddon.metrics.Metrics;
 import io.myzticbean.finditemaddon.quickshop.QSApi;
 import io.myzticbean.finditemaddon.quickshop.impl.QSHikariAPIHandler;
 import io.myzticbean.finditemaddon.quickshop.impl.QSReremakeAPIHandler;
 import io.myzticbean.finditemaddon.scheduledtasks.Task15MinInterval;
-import io.myzticbean.finditemaddon.utils.enums.PlayerPermsEnum;
+import io.myzticbean.finditemaddon.models.enums.PlayerPermsEnum;
+import io.myzticbean.finditemaddon.utils.async.VirtualThreadScheduler;
 import io.myzticbean.finditemaddon.utils.json.ShopSearchActivityStorageUtil;
 import io.myzticbean.finditemaddon.utils.log.Logger;
 import io.myzticbean.finditemaddon.utils.UpdateChecker;
@@ -82,21 +78,34 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
     // ************************************************************************************
 
     private static FindItemAddOn pluginInstance;
-    public FindItemAddOn() { pluginInstance = this; }
+
+    public FindItemAddOn() {
+        pluginInstance = this;
+    }
+
     public static FindItemAddOn getInstance() {
         return pluginInstance;
     }
 
     public static String serverVersion;
+
     private static final int BS_PLUGIN_METRIC_ID = 12382;
     private static final int SPIGOT_PLUGIN_ID = 95104;
+    private static final String MODRINTH_PROJECT_SLUG = "asp13ugE";
     private static final int REPEATING_TASK_SCHEDULE_MINS = 15*60*20;
     @Getter
     private static ConfigProvider configProvider;
+    @Getter
+    private static UpdateChecker updateChecker;
+    @Getter
     private static boolean isPluginOutdated = false;
+    @Getter
     private static boolean qSReremakeInstalled = false;
+    @Getter
     private static boolean qSHikariInstalled = false;
     private static QSApi qsApi;
+    @Getter
+    private static BentoBoxPlugin bentoboxPlugin;
 
     private static final HashMap<Player, PlayerMenuUtility> playerMenuUtilityMap = new HashMap<>();
 
@@ -167,6 +176,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
         else if(!ENABLE_TRIAL_PERIOD) {
             Logger.logError("Uh oh! Looks like either this plugin has crashed or you don't have QuickShop-Hikari or QuickShop-Reremake installed.");
         }
+        VirtualThreadScheduler.shutdown();
         Logger.logInfo("Bye!");
     }
 
@@ -205,6 +215,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
         EssentialsXPlugin.setup();
         WGPlugin.setup();
         ResidencePlugin.setup();
+        bentoboxPlugin = new BentoBoxPlugin();
         SlimeSkyblockPlugin.setup();
         GPFlagsPlugin.setup();
 
@@ -216,21 +227,31 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
 
         // init metrics
         Logger.logInfo("Registering anonymous bStats metrics");
-        Metrics metrics = new Metrics(this, BS_PLUGIN_METRIC_ID);
+        new Metrics(this, BS_PLUGIN_METRIC_ID);
 
         // Check for plugin updates
-        new UpdateChecker(SPIGOT_PLUGIN_ID).getLatestVersion(version -> {
-            if(this.getDescription().getVersion().equalsIgnoreCase(version)) {
-                Logger.logInfo("Plugin is up to date!");
-            } else {
+        updateChecker = new UpdateChecker();
+        checkForPluginUpdates();
+    }
+
+    private void checkForPluginUpdates() {
+//        updateChecker.getLatestVersion(version -> {
+//            if(this.getDescription().getVersion().equalsIgnoreCase(version)) {
+//                Logger.logInfo("Plugin is up to date!");
+//            } else {
+//                isPluginOutdated = true;
+//                if(version.toLowerCase().contains("snapshot")) {
+//                    Logger.logWarning("Plugin has a new snapshot version available! (Version: " + version + ")");
+//                }
+//                else {
+//                    Logger.logWarning("Plugin has a new update available! (Version: " + version + ")");
+//                }
+//                Logger.logWarning("Download here: https://www.spigotmc.org/resources/" + SPIGOT_PLUGIN_ID + "/");
+//            }
+//        });
+        updateChecker.isUpdateAvailable(isUpdateAvailable -> {
+            if(Boolean.TRUE.equals(isUpdateAvailable)) {
                 isPluginOutdated = true;
-                if(version.toLowerCase().contains("snapshot")) {
-                    Logger.logWarning("Plugin has a new snapshot version available! (Version: " + version + ")");
-                }
-                else {
-                    Logger.logWarning("Plugin has a new update available! (Version: " + version + ")");
-                }
-                Logger.logWarning("Download here: https://www.spigotmc.org/resources/" + SPIGOT_PLUGIN_ID + "/");
             }
         });
     }
@@ -247,8 +268,12 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
         this.getServer().getPluginManager().registerEvents(new PlayerCommandSendEventListener(), this);
         this.getServer().getPluginManager().registerEvents(new MenuListener(), this);
         this.getServer().getPluginManager().registerEvents(new PlayerJoinEventListener(), this);
+        // QS-Hikari specific event listeners
+        this.getServer().getPluginManager().registerEvents(new ShopCreateEventListener(), this);
+        this.getServer().getPluginManager().registerEvents(new ShopDeleteEventListener(), this);
         this.getServer().getPluginManager().registerEvents(new PlayerQuitEventListener(), this);
     }
+
     private void initExternalPluginEventListeners() {
         Logger.logInfo("Registering external plugin event listeners");
         if(PlayerWarpsPlugin.getIsEnabled()) {
@@ -283,6 +308,10 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
 
     public static int getPluginID() {
         return SPIGOT_PLUGIN_ID;
+    }
+
+    public static String getModrinthProjectSlug() {
+        return MODRINTH_PROJECT_SLUG;
     }
 
     private void initFindItemCmd() {
@@ -367,14 +396,6 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
         } catch (NoSuchFieldException | IllegalAccessException e) {
             Logger.logError(e);
         }
-    }
-
-    public static boolean isQSReremakeInstalled() {
-        return qSReremakeInstalled;
-    }
-
-    public static boolean isQSHikariInstalled() {
-        return qSHikariInstalled;
     }
 
     public static void setQSReremakeInstalled(boolean qSReremakeInstalled) {

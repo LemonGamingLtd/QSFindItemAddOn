@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package io.myzticbean.finditemaddon.utils.enums;
+package io.myzticbean.finditemaddon.models.enums;
 
 /**
  * @author myzticbean
@@ -26,7 +26,8 @@ public enum CustomCmdPlaceholdersEnum {
     PLAYER_NAME("{PLAYER_NAME}"),
     SHOP_LOC_X("{SHOP_LOC_X}"),
     SHOP_LOC_Y("{SHOP_LOC_Y}"),
-    SHOP_LOC_Z("{SHOP_LOC_Z}");
+    SHOP_LOC_Z("{SHOP_LOC_Z}"),
+    SHOP_WORLD("{SHOP_WORLD}");
 
     private final String placeholder;
 

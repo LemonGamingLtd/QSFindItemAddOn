@@ -1,4 +1,59 @@
-## Snapshot 2.0.7.0
+## Release 2.0.7.7
+### Changes
+- Changed comma delimiter to triple pipe (PR #83 by @MattDeWeerd)
+- Added initial classes for Modrinth API integration and a VirtualThreadScheduler for handling asynchronous tasks.
+- Relocated all enum classes from the `utils.enums` package to `models.enums` to improve project structure and organization.
+- Bumped Spigot dependency to `1.21.8-R0.1-SNAPSHOT`
+- Bumped QS-Hikari dependency to `6.2.0.10`
+- Bumped Bentobox dependency to `3.7.3`
+
+## Release 2.0.7.6
+### Bug fixes
+- Fixed `/finditem hideshop`/`/finditem revealshop` not working for newly created shop
+- Added support for custom-model-data to the GUI filler item
+- Added support for `{SHOP_WORLD}` placeholder in custom commands
+
+### Changes
+- Optimized the size of the `shops.json` file
+- Updated config version to `21`
+
+## Release 2.0.7.5
+### Changes
+- Updated dependencies to latest version
+- Fixed a bug teleporting to a shop without essentials (PR #77)
+
+## Release 2.0.7.4
+### Bug fixes
+- Fix for /finditem shows only 'searching...' but no GUI (PR #69)
+
+## Release 2.0.7.3
+### Changes
+- JDK version upgraded from 17 to 21
+- Added check to exclude shops of `buying` shops for owners who don't have enough money.
+- Bentobox integration to ignore shops in locked islands
+
+### Bug fixes
+- Hideshop/revealshop should work with double chests also
+
+## Release 2.0.7.2
+### Bug fixes
+- Fixed item meta not showing correctly in Search GUI
+
+## Release 2.0.7.1
+### Changes
+- Added config option to suppress update notifications in chat
+  ```yaml
+  suppress-update-notifications: false
+  ```
+- Added config option to configure blacklisted materials
+  ```yaml
+  blacklisted-materials:
+  - "BARRIER"
+  - "STRUCTURE_BLOCK"
+  - "COMMAND_BLOCK"
+  ```
+
+## Release 2.0.7.0
 ### Changes
 - Added runnable custom commands on GUI item click. New related config options added.
 - Added a new permission to bypass safety check for shop tp.

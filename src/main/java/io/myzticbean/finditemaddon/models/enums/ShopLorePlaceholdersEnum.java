@@ -16,27 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package io.myzticbean.finditemaddon.utils.warp;
-
-import io.myzticbean.finditemaddon.dependencies.EssentialsXPlugin;
-import io.myzticbean.finditemaddon.dependencies.PlayerWarpsPlugin;
-import io.myzticbean.finditemaddon.FindItemAddOn;
-import lombok.experimental.UtilityClass;
+package io.myzticbean.finditemaddon.models.enums;
 
 /**
+ * List of all the placeholders used in the Shop lore in GUI
  * @author myzticbean
  */
-@UtilityClass
-public class WarpUtils {
-    public static void updateWarps() {
-        if(FindItemAddOn.getConfigProvider().shopGUIItemLoreHasKey("{NEAREST_WARP}")) {
-            if(FindItemAddOn.getConfigProvider().NEAREST_WARP_MODE == 1 && EssentialsXPlugin.isEnabled()) {
-                EssentialsXPlugin.updateAllWarps();
+public enum ShopLorePlaceholdersEnum {
+    ITEM_PRICE("{ITEM_PRICE}"),
+    SHOP_STOCK("{SHOP_STOCK}"),
+    SHOP_OWNER("{SHOP_OWNER}"),
+    SHOP_PER_ITEM_QTY("{ITEM_STACK_SIZE}"),
+    SHOP_LOCATION("{SHOP_LOC}"),
+    SHOP_WORLD("{SHOP_WORLD}"),
+    NEAREST_WARP("{NEAREST_WARP}"),
+    SHOP_VISITS("{SHOP_VISITS}");
+    private final String placeholder;
 
-            }
-            else if(FindItemAddOn.getConfigProvider().NEAREST_WARP_MODE == 2 && PlayerWarpsPlugin.getIsEnabled()) {
-                PlayerWarpsPlugin.updateAllWarpsFromAPI();
-            }
-        }
+    ShopLorePlaceholdersEnum(String placeholder) {
+        this.placeholder = placeholder;
     }
+    public String value() {return placeholder;}
 }

@@ -16,25 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package io.myzticbean.finditemaddon.utils.enums;
+package io.myzticbean.finditemaddon.listeners;
+
+import com.ghostchu.quickshop.api.event.management.ShopCreateEvent;
+import io.myzticbean.finditemaddon.utils.json.ShopSearchActivityStorageUtil;
+import io.myzticbean.finditemaddon.utils.log.Logger;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 
 /**
- * List of all the placeholders used in the Shop lore in GUI
  * @author myzticbean
  */
-public enum ShopLorePlaceholdersEnum {
-    ITEM_PRICE("{ITEM_PRICE}"),
-    SHOP_STOCK("{SHOP_STOCK}"),
-    SHOP_OWNER("{SHOP_OWNER}"),
-    SHOP_PER_ITEM_QTY("{ITEM_STACK_SIZE}"),
-    SHOP_LOCATION("{SHOP_LOC}"),
-    SHOP_WORLD("{SHOP_WORLD}"),
-    NEAREST_WARP("{NEAREST_WARP}"),
-    SHOP_VISITS("{SHOP_VISITS}");
-    private final String placeholder;
-
-    ShopLorePlaceholdersEnum(String placeholder) {
-        this.placeholder = placeholder;
+public class ShopCreateEventListener implements Listener {
+    @EventHandler
+    public void onShopCreate(ShopCreateEvent event) {
+        Logger.logDebugInfo("New shop added!");
+        event.shop().ifPresent(ShopSearchActivityStorageUtil::addShop);
     }
-    public String value() {return placeholder;}
 }

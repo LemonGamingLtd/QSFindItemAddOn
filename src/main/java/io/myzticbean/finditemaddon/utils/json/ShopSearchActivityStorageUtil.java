@@ -24,6 +24,7 @@ import io.myzticbean.finditemaddon.FindItemAddOn;
 import io.myzticbean.finditemaddon.models.HiddenShopModel;
 import io.myzticbean.finditemaddon.models.PlayerShopVisitModel;
 import io.myzticbean.finditemaddon.models.ShopSearchActivityModel;
+import io.myzticbean.finditemaddon.utils.async.VirtualThreadScheduler;
 import io.myzticbean.finditemaddon.utils.log.Logger;
 import lombok.Getter;
 import me.kodysimpson.simpapi.colors.ColorTranslator;
@@ -59,13 +60,9 @@ import java.util.stream.Collectors;
 public class ShopSearchActivityStorageUtil {
 
     private static final String SHOP_SEARCH_ACTIVITY_JSON_FILE_NAME = "shops.json";
-    private static final String COOLDOWNS_YAML_FILE_NAME = "cooldowns.yml";
 
     @Getter
     private static final Map<String, Long> cooldowns = new HashMap<>();
-
-    private static File cooldownsYaml;
-    private static FileConfiguration cooldownsConfig;
 
     @Getter
     private static List<ShopSearchActivityModel> globalShopsList = new ArrayList<>();
@@ -151,7 +148,7 @@ public class ShopSearchActivityStorageUtil {
      * QuickShop Hikari
      * @param shop
      */
-    public void addShop(com.ghostchu.quickshop.api.shop.Shop shop) {
+    public static void addShop(com.ghostchu.quickshop.api.shop.Shop shop) {
         ShopSearchActivityModel shopModel = new ShopSearchActivityModel(
                 shop.getLocation().getWorld().getName(),
                 shop.getLocation().getX(),
@@ -166,8 +163,28 @@ public class ShopSearchActivityStorageUtil {
         globalShopsList.add(shopModel);
     }
 
+    /**
+     * QuickShop Hikari
+     * @param shop
+     */
+    public static void removeShop(com.ghostchu.quickshop.api.shop.Shop shop) {
+        Iterator<ShopSearchActivityModel> shopSearchActivityIterator = globalShopsList.iterator();
+        while(shopSearchActivityIterator.hasNext()) {
+            ShopSearchActivityModel shopSearchActivity = shopSearchActivityIterator.next();
+            if(shopSearchActivity.compareWith(
+                    shop.getLocation().getWorld().getName(),
+                    shop.getLocation().getX(),
+                    shop.getLocation().getY(),
+                    shop.getLocation().getZ()
+            )) {
+                shopSearchActivityIterator.remove();
+                return;
+            }
+        }
+    }
+
     public static void loadShopsFromFile() {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().create();
         File file = new File(FindItemAddOn.getInstance().getDataFolder().getAbsolutePath() + "/" + SHOP_SEARCH_ACTIVITY_JSON_FILE_NAME);
         if(file.exists()) {
             try {
@@ -188,7 +205,7 @@ public class ShopSearchActivityStorageUtil {
     }
 
     public static void saveShopsToFile() {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().create();
         File file = new File(FindItemAddOn.getInstance().getDataFolder().getAbsolutePath() + "/" + SHOP_SEARCH_ACTIVITY_JSON_FILE_NAME);
         file.getParentFile().mkdir();
         try {
@@ -235,7 +252,7 @@ public class ShopSearchActivityStorageUtil {
     }
 
     public static void addPlayerVisitEntryAsync(Location shopLocation, Player visitingPlayer) {
-        FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() -> {
+        VirtualThreadScheduler.runTaskAsync(() -> {
             if(handleCooldownIfPresent(shopLocation, visitingPlayer)) {
                 Iterator<ShopSearchActivityModel> shopSearchActivityIterator = globalShopsList.iterator();
                 int i = 0;
@@ -251,7 +268,7 @@ public class ShopSearchActivityStorageUtil {
                         playerShopVisit.setPlayerUUID(visitingPlayer.getUniqueId());
                         playerShopVisit.setVisitDateTime();
                         globalShopsList.get(i).getPlayerVisitList().add(playerShopVisit);
-                        Logger.logDebugInfo("Added new player visit entry at " + shopLocation.toString());
+                        Logger.logDebugInfo("Added new player visit entry at " + shopLocation);
                         break;
                     }
                     i++;
