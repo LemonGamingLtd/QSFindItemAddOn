@@ -249,11 +249,11 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
 //                Logger.logWarning("Download here: https://www.spigotmc.org/resources/" + SPIGOT_PLUGIN_ID + "/");
 //            }
 //        });
-        updateChecker.isUpdateAvailable(isUpdateAvailable -> {
-            if(Boolean.TRUE.equals(isUpdateAvailable)) {
-                isPluginOutdated = true;
-            }
-        });
+//        updateChecker.isUpdateAvailable(isUpdateAvailable -> {
+//            if(Boolean.TRUE.equals(isUpdateAvailable)) {
+//                isPluginOutdated = true;
+//            }
+//        });
     }
 
     private void initCommands() {
@@ -300,10 +300,6 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
 
     public static boolean removePlayerMenuUtility(Player p){
         return playerMenuUtilityMap.remove(p) != null;
-    }
-
-    public static boolean getPluginOutdated() {
-        return isPluginOutdated;
     }
 
     public static int getPluginID() {

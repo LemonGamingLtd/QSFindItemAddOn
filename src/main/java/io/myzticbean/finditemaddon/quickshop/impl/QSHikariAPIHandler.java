@@ -18,7 +18,6 @@
  */
 package io.myzticbean.finditemaddon.quickshop.impl;
 
-import cc.carm.lib.easysql.api.SQLQuery;
 import com.ghostchu.quickshop.QuickShop;
 import com.ghostchu.quickshop.QuickShopBukkit;
 import com.ghostchu.quickshop.api.QuickShopAPI;
@@ -27,6 +26,7 @@ import com.ghostchu.quickshop.api.obj.QUser;
 import com.ghostchu.quickshop.api.shop.Shop;
 import com.ghostchu.quickshop.api.shop.permission.BuiltInShopPermission;
 import com.ghostchu.quickshop.database.DataTables;
+import com.ghostchu.quickshop.shade.carm.easysql.api.SQLQuery;
 import com.ghostchu.quickshop.util.Util;
 import io.myzticbean.finditemaddon.quickshop.QSApi;
 import io.myzticbean.finditemaddon.commands.quickshop.subcommands.FindItemCmdHikariImpl;
@@ -120,7 +120,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
         double itemAmount = shop.getItem().getAmount();
         double pricePerTransaction = price * itemAmount;
 
-        var economy = getQuickShop().getEconomy();
+        var economy = getQuickShop().getEconomyManager();
         var qUser = shop.getOwner();
         var uuid = qUser.getUniqueIdIfRealPlayer().orElse(null);
         // return true if not a real player
@@ -136,7 +136,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
         var currency = shop.getCurrency();
 
         // Get owner's balance through QuickShop API
-        return economy.getBalance(qUser, world, currency) >= pricePerTransaction;
+        return economy.provider().balance(qUser, world.getName(), currency).doubleValue() >= pricePerTransaction;
     }
 
     private static QuickShop getQuickShop() {

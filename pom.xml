@@ -16,7 +16,7 @@
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spigot.version>1.21.8-R0.1-SNAPSHOT</spigot.version>
-        <qs-hikari.version>6.2.0.10</qs-hikari.version>
+        <qs-hikari.version>6.2.0.11-SNAPSHOT-14</qs-hikari.version>
         <playerwarps-api-old>6.30.0</playerwarps-api-old>
         <playerwarps-api-new>7.7.1</playerwarps-api-new>
         <essentialsx.version>2.21.1</essentialsx.version>
@@ -324,18 +324,6 @@
         <dependency>
             <groupId>com.olziedev</groupId>
             <artifactId>playerwarps-api</artifactId>
-            <version>${playerwarps-api-old}</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.olziedev</groupId>
-            <artifactId>playerwarps-api</artifactId>
             <version>${playerwarps-api-new}</version>
             <scope>provided</scope>
         </dependency>
@@ -475,7 +463,7 @@
         <dependency>
             <groupId>me.ryanhamshire</groupId>
             <artifactId>GPFlags</artifactId>
-            <version>5.13.8</version>
+            <version>5.13.4</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/GPFlags-5.13.4.jar</systemPath>
         </dependency>
@@ -484,7 +472,6 @@
             <artifactId>bentobox</artifactId>
             <version>3.7.3</version>
             <scope>provided</scope>
-            <systemPath>${project.basedir}/lib/GPFlags-5.13.8.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.github.NahuLD.folia-scheduler-wrapper</groupId>

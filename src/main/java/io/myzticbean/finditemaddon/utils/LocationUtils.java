@@ -18,7 +18,7 @@
  */
 package io.myzticbean.finditemaddon.utils;
 
-import io.myzticbean.finditemaddon.dependencies.PlayerWarpsPlugin;
+import io.myzticbean.finditemaddon.FindItemAddOn;
 import io.myzticbean.finditemaddon.models.enums.PlayerPermsEnum;
 import io.myzticbean.finditemaddon.utils.log.Logger;
 import lombok.experimental.UtilityClass;
