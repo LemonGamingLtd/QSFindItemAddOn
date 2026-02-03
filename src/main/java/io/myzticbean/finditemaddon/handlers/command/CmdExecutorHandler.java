@@ -49,6 +49,60 @@ public class CmdExecutorHandler {
     public static final String NO_PERMISSION = "&cNo permission!";
 
     /**
+     * Handles the shop search when no item is specified
+     * @param buySellSubCommand Whether player is buying or selling
+     * @param commandSender Who is the command sender: console or player
+     */
+    public void handleShopSearchWithItemInHand(String buySellSubCommand, CommandSender commandSender) {
+        if (!(commandSender instanceof Player player)) {
+            Logger.logInfo(THIS_COMMAND_CAN_ONLY_BE_RUN_FROM_IN_GAME);
+            return;
+        }
+        if (!player.hasPermission(PlayerPermsEnum.FINDITEM_USE.value())) {
+            player.sendMessage(ColorTranslator.translateColorCodes(FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + NO_PERMISSION));
+            return;
+        }
+
+        ItemStack itemInHand = player.getInventory().getItemInMainHand();
+        if (itemInHand.getType() == Material.AIR) {
+            player.sendMessage(ColorTranslator.translateColorCodes(
+                    FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + "&cYou must hold an item in your hand or specify an item name!"));
+            return;
+        }
+
+        // Show searching... message
+        if (!StringUtils.isEmpty(FindItemAddOn.getConfigProvider().SHOP_SEARCH_LOADING_MSG)) {
+            player.sendMessage(ColorTranslator.translateColorCodes(FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + FindItemAddOn.getConfigProvider().SHOP_SEARCH_LOADING_MSG));
+        }
+
+        boolean isBuying;
+        if(StringUtils.isEmpty(FindItemAddOn.getConfigProvider().FIND_ITEM_TO_BUY_AUTOCOMPLETE)
+                || StringUtils.containsIgnoreCase(FindItemAddOn.getConfigProvider().FIND_ITEM_TO_BUY_AUTOCOMPLETE, " ")) {
+            isBuying = buySellSubCommand.equalsIgnoreCase("to_buy");
+        }
+        else {
+            isBuying = buySellSubCommand.equalsIgnoreCase(FindItemAddOn.getConfigProvider().FIND_ITEM_TO_BUY_AUTOCOMPLETE);
+        }
+
+        // Search using the item type from hand
+        if(this.checkMaterialBlacklist(itemInHand.getType())) {
+            player.sendMessage(ColorTranslator.translateColorCodes(FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + "&cThis material is not allowed."));
+            return;
+        }
+
+        // If QS Hikari installed and Shop Cache feature available (>6), then run in async thread
+        if(!FindItemAddOn.isQSReremakeInstalled() && FindItemAddOn.getQsApiInstance().isQSShopCacheImplemented()) {
+            VirtualThreadScheduler.runTaskAsync(() -> {
+                List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().findItemBasedOnTypeFromAllShops(itemInHand, isBuying, player);
+                this.openShopMenu(player, searchResultList, true, FindItemAddOn.getConfigProvider().NO_SHOP_FOUND_MSG);
+            });
+        } else {
+            List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().findItemBasedOnTypeFromAllShops(itemInHand, isBuying, player);
+            this.openShopMenu(player, searchResultList, false, FindItemAddOn.getConfigProvider().NO_SHOP_FOUND_MSG);
+        }
+    }
+
+    /**
      * Handles the main shop search process
      * @param buySellSubCommand Whether player is buying or selling
      * @param commandSender Who is the command sender: console or player

@@ -68,16 +68,20 @@ public class FindItemCmdReremakeImpl implements CommandHandler<Player> {
             commandSender.sendMessage(ColorTranslator.translateColorCodes(FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + "&cIncorrect usage!"));
         }
         else if(args.length == 1) {
-            if(commandSender.hasPermission(PlayerPermsEnum.FINDITEM_HIDESHOP.value()) && !FindItemAddOn.getConfigProvider().FIND_ITEM_CMD_REMOVE_HIDE_REVEAL_SUBCMDS) {
-                if(args[0].equalsIgnoreCase(hideSubCommand)) {
+            if(args[0].equalsIgnoreCase(hideSubCommand)) {
+                if(commandSender.hasPermission(PlayerPermsEnum.FINDITEM_HIDESHOP.value()) && !FindItemAddOn.getConfigProvider().FIND_ITEM_CMD_REMOVE_HIDE_REVEAL_SUBCMDS) {
                     cmdExecutor.handleHideShop(commandSender);
-                } else if(args[0].equalsIgnoreCase(revealShopSubCommand)) {
+                } else {
+                    commandSender.sendMessage(ColorTranslator.translateColorCodes(FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + "&cYou don't have permission to use that!"));
+                }
+            } else if(args[0].equalsIgnoreCase(revealShopSubCommand)) {
+                if(commandSender.hasPermission(PlayerPermsEnum.FINDITEM_HIDESHOP.value()) && !FindItemAddOn.getConfigProvider().FIND_ITEM_CMD_REMOVE_HIDE_REVEAL_SUBCMDS) {
                     cmdExecutor.handleRevealShop(commandSender);
                 } else {
-                    commandSender.sendMessage(ColorTranslator.translateColorCodes(FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + "&cIncorrect usage!"));
+                    commandSender.sendMessage(ColorTranslator.translateColorCodes(FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + "&cYou don't have permission to use that!"));
                 }
             } else {
-                commandSender.sendMessage(ColorTranslator.translateColorCodes(FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + "&cYou don't have permission to use that!"));
+                cmdExecutor.handleShopSearchWithItemInHand(args[0], commandSender);
             }
         } else {
             cmdExecutor.handleShopSearch(args[0], commandSender, args[1]);

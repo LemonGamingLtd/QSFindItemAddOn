@@ -80,12 +80,15 @@ public class SellSubCmd extends SubCommand {
 
     @Override
     public void perform(CommandSender commandSender, String[] args) {
-        if(args.length != 2)
+        if(args.length == 1) {
+            cmdExecutor.handleShopSearchWithItemInHand(sellSubCommand, commandSender);
+        } else if (args.length == 2) {
+            cmdExecutor.handleShopSearch(sellSubCommand, commandSender, args[1]);
+        } else {
             commandSender.sendMessage(ColorTranslator.translateColorCodes(
                     FindItemAddOn.getConfigProvider().PLUGIN_PREFIX
                             + FindItemAddOn.getConfigProvider().FIND_ITEM_CMD_INCORRECT_USAGE_MSG));
-        else
-            cmdExecutor.handleShopSearch(sellSubCommand, commandSender, args[1]);
+        }
     }
 
     @Override
