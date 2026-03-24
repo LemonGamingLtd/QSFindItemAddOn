@@ -226,6 +226,9 @@ public class FoundShopsMenu extends PaginatedMenu {
         // Find a safe location around the shop
         Location locToTeleport = LocationUtils.findSafeLocationAroundShop(location, player);
         if (locToTeleport == null) {
+            Logger.logDebugInfo("[SafeTP] Sending unsafe area message to player " + player.getName() 
+                    + " for shop at " + location.getWorld().getName() + " " 
+                    + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
             sendUnsafeAreaMessage(player);
             return;
         }

@@ -126,7 +126,12 @@ public class LocationUtils {
     @Nullable
     public static Location findSafeLocationAroundShop(Location shopLocation, Player player) {
         Location roundedShopLoc = getRoundedDestination(shopLocation);
-        Logger.logDebugInfo("Rounded location: " + roundedShopLoc.getX() + ", " + roundedShopLoc.getY() + ", " + roundedShopLoc.getZ());
+        Logger.logDebugInfo("[SafeTP] Starting safe location search for player " + player.getName());
+        Logger.logDebugInfo("[SafeTP] Shop location: " + shopLocation.getWorld().getName() + " " 
+                + shopLocation.getX() + ", " + shopLocation.getY() + ", " + shopLocation.getZ());
+        Logger.logDebugInfo("[SafeTP] Rounded shop location: " + roundedShopLoc.getX() + ", " + roundedShopLoc.getY() + ", " + roundedShopLoc.getZ());
+        Logger.logDebugInfo("[SafeTP] Expected shop sign material: " + FindItemAddOn.getQsApiInstance().getShopSignMaterial());
+        
         // Creating a list of four block locations in 4 sides of the shop
         List<Location> possibleSafeLocList = new ArrayList<>();
         possibleSafeLocList.add(new Location(
@@ -153,12 +158,20 @@ public class LocationUtils {
                 roundedShopLoc.getY(),
                 roundedShopLoc.getZ() - 1
         ));
+        
+        Logger.logDebugInfo("[SafeTP] Checking 4 cardinal directions for shop sign...");
+        boolean signFound = false;
         for(Location loc_i : possibleSafeLocList) {
-            Logger.logDebugInfo("Possible safe location: " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ());
-            if(loc_i.getBlock().getType().equals(FindItemAddOn.getQsApiInstance().getShopSignMaterial())) {
-                Logger.logDebugInfo("Shop sign block found at " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ());
+            Material blockType = loc_i.getBlock().getType();
+            Logger.logDebugInfo("[SafeTP] Checking position: " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ() 
+                    + " | Block: " + blockType);
+            if(blockType.equals(FindItemAddOn.getQsApiInstance().getShopSignMaterial())) {
+                signFound = true;
+                Logger.logDebugInfo("[SafeTP] SUCCESS: Shop sign found at " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ());
+                
                 // Adding a check for a safe location check bypass permission
                 if(player.hasPermission(PlayerPermsEnum.FINDITEM_SHOPTP_BYPASS_SAFETYCHECK.value())) {
+                    Logger.logDebugInfo("[SafeTP] Player has bypass permission, skipping safety checks");
                     Location blockBelow = new Location(
                             loc_i.getWorld(),
                             loc_i.getBlockX(),
@@ -173,15 +186,19 @@ public class LocationUtils {
                     )), roundedShopLoc);
                     return loc_i;
                 }
+
                 // check if the block above is suffocating
                 Location blockAbove = new Location(
                         loc_i.getWorld(),
                         loc_i.getBlockX(),
                         loc_i.getBlockY() + 1,
                         loc_i.getBlockZ());
-                Logger.logDebugInfo("Block above shop sign: "
-                        + blockAbove.getX() + ", " + blockAbove.getY() + ", " + blockAbove.getZ());
+                Material aboveBlockType = blockAbove.getBlock().getType();
+                Logger.logDebugInfo("[SafeTP] Checking block above sign at " + blockAbove.getX() + ", " + blockAbove.getY() + ", " + blockAbove.getZ() 
+                        + " | Block: " + aboveBlockType);
+                
                 if(!isBlockSuffocating(blockAbove)) {
+                    Logger.logDebugInfo("[SafeTP] Block above is not suffocating, checking for safe ground below...");
                     Location blockBelow = null;
                     boolean safeLocFound = false;
                     for(int i = 1; i <= BELOW_SAFE_BLOCK_CHECK_LIMIT; i++) {
@@ -191,21 +208,23 @@ public class LocationUtils {
                                 loc_i.getBlockY() - i,
                                 loc_i.getBlockZ()
                         );
-                        Logger.logDebugInfo("Block below shop sign: "
-                                + blockBelow.getBlock().getType() + " " + blockBelow.getX() + ", " + blockBelow.getY() + ", " + blockBelow.getZ());
-                        if(blockBelow.getBlock().getType().equals(Material.AIR)
-                            || blockBelow.getBlock().getType().equals(Material.CAVE_AIR)
-                            || blockBelow.getBlock().getType().equals(Material.VOID_AIR)
-                            || blockBelow.getBlock().getType().equals(FindItemAddOn.getQsApiInstance().getShopSignMaterial())) {
-                            // do nothing and let the loop run
-                            Logger.logDebugInfo("Shop or Air found below");
+                        Material belowBlockType = blockBelow.getBlock().getType();
+                        Logger.logDebugInfo("[SafeTP] Checking " + i + " blocks below: " + belowBlockType 
+                                + " at " + blockBelow.getX() + ", " + blockBelow.getY() + ", " + blockBelow.getZ());
+                        
+                        if(belowBlockType.equals(Material.AIR)
+                            || belowBlockType.equals(Material.CAVE_AIR)
+                            || belowBlockType.equals(Material.VOID_AIR)
+                            || belowBlockType.equals(FindItemAddOn.getQsApiInstance().getShopSignMaterial())) {
+                            Logger.logDebugInfo("[SafeTP] Air/Sign found, continuing search below...");
                         }
                         else if(!isBlockDamaging(blockBelow)) {
-                            Logger.logDebugInfo("Safe block found!");
+                            Logger.logDebugInfo("[SafeTP] SUCCESS: Safe ground block found: " + belowBlockType);
                             safeLocFound = true;
                             break;
                         }
                         else {
+                            Logger.logDebugInfo("[SafeTP] FAILED: Damaging block found: " + belowBlockType);
                             break;
                         }
                     }
@@ -216,22 +235,31 @@ public class LocationUtils {
                                 blockBelow.getY() + 1,
                                 blockBelow.getZ()
                         )), roundedShopLoc);
+                        Logger.logDebugInfo("[SafeTP] Final teleport location: " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ());
                         return loc_i;
                     }
                     else {
+                        Logger.logDebugInfo("[SafeTP] FAILED: No safe ground found within " + BELOW_SAFE_BLOCK_CHECK_LIMIT 
+                                + " blocks below (only air/void or damaging blocks)");
                         return null;
                     }
                 }
                 else {
-                    Logger.logDebugInfo("Block above shop sign found not air. Block type: " + blockAbove.getBlock().getType());
+                    Logger.logDebugInfo("[SafeTP] FAILED: Block above shop sign is suffocating: " + aboveBlockType 
+                            + " (player would suffocate)");
                     return null;
                 }
             }
-            else {
-                Logger.logDebugInfo("Block not shop sign. Block type: " + loc_i.getBlock().getType());
-            }
         }
-        Logger.logDebugInfo("No safe block found near shop");
+        
+        if(!signFound) {
+            Logger.logDebugInfo("[SafeTP] FAILED: No shop sign found in any of the 4 cardinal directions!");
+            Logger.logDebugInfo("[SafeTP] This can happen if:");
+            Logger.logDebugInfo("[SafeTP]   - Sign is placed on TOP of chest (Y+1) instead of side");
+            Logger.logDebugInfo("[SafeTP]   - Sign is placed BELOW chest (Y-1)");
+            Logger.logDebugInfo("[SafeTP]   - Sign was broken/removed");
+            Logger.logDebugInfo("[SafeTP]   - Sign material doesn't match expected: " + FindItemAddOn.getQsApiInstance().getShopSignMaterial());
+        }
         return null;
     }
 
