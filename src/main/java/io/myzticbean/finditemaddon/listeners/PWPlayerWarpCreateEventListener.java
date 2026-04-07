@@ -19,9 +19,8 @@
 package io.myzticbean.finditemaddon.listeners;
 
 import com.olziedev.playerwarps.api.events.warp.PlayerWarpCreateEvent;
-import io.myzticbean.finditemaddon.dependencies.PlayerWarpsPlugin;
 import io.myzticbean.finditemaddon.FindItemAddOn;
-import org.bukkit.Bukkit;
+import io.myzticbean.finditemaddon.dependencies.PlayerWarpsPlugin;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
@@ -32,8 +31,7 @@ public class PWPlayerWarpCreateEventListener implements Listener {
     @EventHandler
     public void onPlayerWarpCreate(PlayerWarpCreateEvent event) {
         // Issue #24 Fix: Converted updateWarpsOnEventCall() call to async
-        FindItemAddOn.getInstance().getScheduler().runTaskAsynchronously(() ->
-            PlayerWarpsPlugin.updateWarpsOnEventCall(event.getPlayerWarp(), false)
-        );
+        FindItemAddOn.getScheduler().runAsync(
+                (t) -> PlayerWarpsPlugin.updateWarpsOnEventCall(event.getPlayerWarp(), false));
     }
 }

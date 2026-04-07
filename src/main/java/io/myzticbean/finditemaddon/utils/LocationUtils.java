@@ -22,7 +22,6 @@ import io.myzticbean.finditemaddon.FindItemAddOn;
 import io.myzticbean.finditemaddon.models.enums.PlayerPermsEnum;
 import io.myzticbean.finditemaddon.utils.log.Logger;
 import lombok.experimental.UtilityClass;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -35,6 +34,10 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author myzticbean
@@ -57,11 +60,16 @@ public class LocationUtils {
         });
     }};
 
-    private static final List<Material> damagingBlocks = new ArrayList<>();
-    private static final List<Material> nonSuffocatingBlocks = new ArrayList<>();
+    private static final Set<Material> damagingBlocks = new HashSet<>();
+    private static final Set<Material> nonSuffocatingBlocks = new HashSet<>();
+    private static final Set<Material> walledSignBlocks = new HashSet<>();
     private static final int BELOW_SAFE_BLOCK_CHECK_LIMIT = 20;
 
     static {
+        walledSignBlocks.addAll(Arrays.stream(Material.values())
+                .filter(p -> p.toString().toLowerCase().contains("_wall_sign"))
+                .collect(Collectors.toSet())
+        );
         // Initializing Damaging blocks
         damagingBlocks.add(Material.LAVA);
         damagingBlocks.add(Material.CACTUS);
@@ -79,11 +87,15 @@ public class LocationUtils {
         // Glass
         nonSuffocatingBlocks.add(Material.GLASS);
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_glass")).toList())
+                Arrays.stream(Material.values())
+                        .filter(p -> p.toString().toLowerCase().contains("_glass"))
+                        .collect(Collectors.toSet())
         );
         // Glass Panes
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("glass_pane")).toList())
+                Arrays.stream(Material.values())
+                        .filter(p -> p.toString().toLowerCase().contains("glass_pane"))
+                        .collect(Collectors.toSet())
         );
         // Leaves
         nonSuffocatingBlocks.add(Material.ACACIA_LEAVES);
@@ -92,21 +104,33 @@ public class LocationUtils {
         nonSuffocatingBlocks.add(Material.JUNGLE_LEAVES);
         nonSuffocatingBlocks.add(Material.OAK_LEAVES);
         nonSuffocatingBlocks.add(Material.SPRUCE_LEAVES);
-        if(Bukkit.getServer().getVersion().contains("1.17")) {
-            nonSuffocatingBlocks.add(Material.AZALEA_LEAVES);
-            nonSuffocatingBlocks.add(Material.FLOWERING_AZALEA_LEAVES);
-        }
+        nonSuffocatingBlocks.add(Material.AZALEA_LEAVES);
+        nonSuffocatingBlocks.add(Material.FLOWERING_AZALEA_LEAVES);
         // Slabs
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_slab")).toList())
+                Arrays.stream(Material.values())
+                        .filter(p -> p.toString().toLowerCase().contains("_slab"))
+                        .collect(Collectors.toSet())
         );
         // Walled Signs
+        nonSuffocatingBlocks.addAll(walledSignBlocks);
+        // Hanging Signs
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_sign")).toList())
+                Arrays.stream(Material.values())
+                        .filter(p -> p.toString().toLowerCase().contains("_hanging_sign"))
+                        .collect(Collectors.toSet())
         );
         // Stairs
         nonSuffocatingBlocks.addAll(
-                new ArrayList<>(Arrays.stream(Material.values()).filter(p -> p.toString().toLowerCase().contains("_stairs")).toList())
+                Arrays.stream(Material.values())
+                        .filter(p -> p.toString().toLowerCase().contains("_stairs"))
+                        .collect(Collectors.toSet())
+        );
+        // Fences
+        nonSuffocatingBlocks.addAll(
+                Arrays.stream(Material.values())
+                        .filter(p -> p.toString().toLowerCase().contains("_fence"))
+                        .collect(Collectors.toSet())
         );
         // MISC
         nonSuffocatingBlocks.add(Material.HONEY_BLOCK);
@@ -117,21 +141,21 @@ public class LocationUtils {
         nonSuffocatingBlocks.add(Material.COMPOSTER);
         nonSuffocatingBlocks.add(Material.GRINDSTONE);
         nonSuffocatingBlocks.add(Material.STONECUTTER);
-        nonSuffocatingBlocks.add(Material.IRON_BARS);
         nonSuffocatingBlocks.add(Material.END_PORTAL_FRAME);
         nonSuffocatingBlocks.add(Material.PISTON_HEAD);
-
     }
 
-    @Nullable
-    public static Location findSafeLocationAroundShop(Location shopLocation, Player player) {
+
+    public static CompletableFuture<@org.jspecify.annotations.Nullable Location> findSafeLocationAroundShop(Location shopLocation, Player player) {
+        Logger.logDebugInfo("Finding safe location around the shop");
+        CompletableFuture<@org.jspecify.annotations.Nullable Location> future = new CompletableFuture<>();
         Location roundedShopLoc = getRoundedDestination(shopLocation);
         Logger.logDebugInfo("[SafeTP] Starting safe location search for player " + player.getName());
-        Logger.logDebugInfo("[SafeTP] Shop location: " + shopLocation.getWorld().getName() + " " 
+        Logger.logDebugInfo("[SafeTP] Shop location: " + shopLocation.getWorld().getName() + " "
                 + shopLocation.getX() + ", " + shopLocation.getY() + ", " + shopLocation.getZ());
         Logger.logDebugInfo("[SafeTP] Rounded shop location: " + roundedShopLoc.getX() + ", " + roundedShopLoc.getY() + ", " + roundedShopLoc.getZ());
         Logger.logDebugInfo("[SafeTP] Expected shop sign material: " + FindItemAddOn.getQsApiInstance().getShopSignMaterial());
-        
+
         // Creating a list of four block locations in 4 sides of the shop
         List<Location> possibleSafeLocList = new ArrayList<>();
         possibleSafeLocList.add(new Location(
@@ -158,17 +182,17 @@ public class LocationUtils {
                 roundedShopLoc.getY(),
                 roundedShopLoc.getZ() - 1
         ));
-        
+
         Logger.logDebugInfo("[SafeTP] Checking 4 cardinal directions for shop sign...");
         boolean signFound = false;
         for(Location loc_i : possibleSafeLocList) {
             Material blockType = loc_i.getBlock().getType();
-            Logger.logDebugInfo("[SafeTP] Checking position: " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ() 
+            Logger.logDebugInfo("[SafeTP] Checking position: " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ()
                     + " | Block: " + blockType);
             if(blockType.equals(FindItemAddOn.getQsApiInstance().getShopSignMaterial())) {
                 signFound = true;
                 Logger.logDebugInfo("[SafeTP] SUCCESS: Shop sign found at " + loc_i.getX() + ", " + loc_i.getY() + ", " + loc_i.getZ());
-                
+
                 // Adding a check for a safe location check bypass permission
                 if(player.hasPermission(PlayerPermsEnum.FINDITEM_SHOPTP_BYPASS_SAFETYCHECK.value())) {
                     Logger.logDebugInfo("[SafeTP] Player has bypass permission, skipping safety checks");
@@ -194,9 +218,9 @@ public class LocationUtils {
                         loc_i.getBlockY() + 1,
                         loc_i.getBlockZ());
                 Material aboveBlockType = blockAbove.getBlock().getType();
-                Logger.logDebugInfo("[SafeTP] Checking block above sign at " + blockAbove.getX() + ", " + blockAbove.getY() + ", " + blockAbove.getZ() 
+                Logger.logDebugInfo("[SafeTP] Checking block above sign at " + blockAbove.getX() + ", " + blockAbove.getY() + ", " + blockAbove.getZ()
                         + " | Block: " + aboveBlockType);
-                
+
                 if(!isBlockSuffocating(blockAbove)) {
                     Logger.logDebugInfo("[SafeTP] Block above is not suffocating, checking for safe ground below...");
                     Location blockBelow = null;
@@ -209,9 +233,9 @@ public class LocationUtils {
                                 loc_i.getBlockZ()
                         );
                         Material belowBlockType = blockBelow.getBlock().getType();
-                        Logger.logDebugInfo("[SafeTP] Checking " + i + " blocks below: " + belowBlockType 
+                        Logger.logDebugInfo("[SafeTP] Checking " + i + " blocks below: " + belowBlockType
                                 + " at " + blockBelow.getX() + ", " + blockBelow.getY() + ", " + blockBelow.getZ());
-                        
+
                         if(belowBlockType.equals(Material.AIR)
                             || belowBlockType.equals(Material.CAVE_AIR)
                             || belowBlockType.equals(Material.VOID_AIR)
@@ -239,19 +263,19 @@ public class LocationUtils {
                         return loc_i;
                     }
                     else {
-                        Logger.logDebugInfo("[SafeTP] FAILED: No safe ground found within " + BELOW_SAFE_BLOCK_CHECK_LIMIT 
+                        Logger.logDebugInfo("[SafeTP] FAILED: No safe ground found within " + BELOW_SAFE_BLOCK_CHECK_LIMIT
                                 + " blocks below (only air/void or damaging blocks)");
                         return null;
                     }
                 }
                 else {
-                    Logger.logDebugInfo("[SafeTP] FAILED: Block above shop sign is suffocating: " + aboveBlockType 
+                    Logger.logDebugInfo("[SafeTP] FAILED: Block above shop sign is suffocating: " + aboveBlockType
                             + " (player would suffocate)");
                     return null;
                 }
             }
         }
-        
+
         if(!signFound) {
             Logger.logDebugInfo("[SafeTP] FAILED: No shop sign found in any of the 4 cardinal directions!");
             Logger.logDebugInfo("[SafeTP] This can happen if:");
@@ -264,14 +288,14 @@ public class LocationUtils {
     }
 
     // Found the below function from this thread: https://bukkit.org/threads/lookat-and-move-functions.26768/
-    private static Location lookAt(Location loc, Location lookat) {
+    private static Location lookAt(Location loc, Location lookAt) {
         //Clone the loc to prevent applied changes to the input loc
         loc = loc.clone();
 
         // Values of change in distance (make it relative)
-        double dx = lookat.getX() - loc.getX();
-        double dy = lookat.getY() - loc.getY();
-        double dz = lookat.getZ() - loc.getZ();
+        double dx = lookAt.getX() - loc.getX();
+        double dy = lookAt.getY() - loc.getY();
+        double dz = lookAt.getZ() - loc.getZ();
 
         // Set yaw
         if (dx != 0) {

@@ -18,39 +18,40 @@
  */
 package io.myzticbean.finditemaddon;
 
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.impl.PlatformScheduler;
 import io.myzticbean.finditemaddon.commands.simpapi.BuySubCmd;
+import io.myzticbean.finditemaddon.commands.simpapi.DebugSubCmd;
 import io.myzticbean.finditemaddon.commands.simpapi.HideShopSubCmd;
 import io.myzticbean.finditemaddon.commands.simpapi.ReloadSubCmd;
 import io.myzticbean.finditemaddon.commands.simpapi.RevealShopSubCmd;
 import io.myzticbean.finditemaddon.commands.simpapi.SellSubCmd;
 import io.myzticbean.finditemaddon.config.ConfigProvider;
 import io.myzticbean.finditemaddon.config.ConfigSetup;
+import io.myzticbean.finditemaddon.dependencies.BentoBoxPlugin;
 import io.myzticbean.finditemaddon.dependencies.EssentialsXPlugin;
 import io.myzticbean.finditemaddon.dependencies.GPFlagsPlugin;
 import io.myzticbean.finditemaddon.dependencies.PlayerWarpsPlugin;
 import io.myzticbean.finditemaddon.dependencies.ResidencePlugin;
 import io.myzticbean.finditemaddon.dependencies.SlimeSkyblockPlugin;
 import io.myzticbean.finditemaddon.dependencies.WGPlugin;
-import io.myzticbean.finditemaddon.dependencies.BentoBoxPlugin;
 import io.myzticbean.finditemaddon.handlers.gui.PlayerMenuUtility;
 import io.myzticbean.finditemaddon.listeners.*;
-import io.myzticbean.finditemaddon.metrics.Metrics;
+import io.myzticbean.finditemaddon.models.enums.PlayerPermsEnum;
 import io.myzticbean.finditemaddon.quickshop.QSApi;
 import io.myzticbean.finditemaddon.quickshop.impl.QSHikariAPIHandler;
-import io.myzticbean.finditemaddon.quickshop.impl.QSReremakeAPIHandler;
 import io.myzticbean.finditemaddon.scheduledtasks.Task15MinInterval;
-import io.myzticbean.finditemaddon.models.enums.PlayerPermsEnum;
+import io.myzticbean.finditemaddon.utils.UpdateChecker;
 import io.myzticbean.finditemaddon.utils.async.VirtualThreadScheduler;
 import io.myzticbean.finditemaddon.utils.json.ShopSearchActivityStorageUtil;
 import io.myzticbean.finditemaddon.utils.log.Logger;
-import io.myzticbean.finditemaddon.utils.UpdateChecker;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import me.kodysimpson.simpapi.colors.ColorTranslator;
 import me.kodysimpson.simpapi.command.CommandManager;
 import me.kodysimpson.simpapi.command.SubCommand;
-import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import org.apache.commons.lang3.StringUtils;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -69,7 +70,7 @@ import java.util.List;
  * @author myzticbean
  */
 @Slf4j
-public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
+public final class FindItemAddOn extends JavaPlugin {
 
     // ONLY FOR SNAPSHOT BUILDS
     // Change it to whenever you want your snapshot trial build to expire
@@ -77,14 +78,20 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
     private static final int TRIAL_END_YEAR = 2024, TRIAL_END_MONTH = 5, TRIAL_END_DAY = 5;
     // ************************************************************************************
 
-    private static FindItemAddOn pluginInstance;
+    private static Plugin pluginInstance;
+    @Getter
+    private static FoliaLib foliaLib;
 
     public FindItemAddOn() {
         pluginInstance = this;
     }
 
-    public static FindItemAddOn getInstance() {
+    public static Plugin getInstance() {
         return pluginInstance;
+    }
+
+    public static PlatformScheduler getScheduler() {
+        return foliaLib.getScheduler();
     }
 
     public static String serverVersion;
@@ -103,7 +110,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
     private static boolean qSReremakeInstalled = false;
     @Getter
     private static boolean qSHikariInstalled = false;
-    private static QSApi qsApi;
+    private static QSApi<?, ?> qsApi;
     @Getter
     private static BentoBoxPlugin bentoboxPlugin;
 
@@ -111,6 +118,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
 
     @Override
     public void onLoad() {
+        foliaLib = new FoliaLib(this);
         Logger.logInfo("A Shop Search AddOn for QuickShop developed by myzticbean");
 
         // Show warning if it's a snapshot build
@@ -164,7 +172,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
         initCommands();
 
         // Run plugin startup logic after server is done loading
-        getScheduler().runTask(this::runPluginStartupTasks);
+        FindItemAddOn.getScheduler().runNextTick(t -> this.runPluginStartupTasks());
     }
 
     @Override
@@ -174,31 +182,29 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
             ShopSearchActivityStorageUtil.saveShopsToFile();
         }
         else if(!ENABLE_TRIAL_PERIOD) {
-            Logger.logError("Uh oh! Looks like either this plugin has crashed or you don't have QuickShop-Hikari or QuickShop-Reremake installed.");
+            Logger.logError("Uh oh! Looks like either this plugin has crashed or you don't have QuickShop-Hikari installed.");
         }
         VirtualThreadScheduler.shutdown();
         Logger.logInfo("Bye!");
     }
 
     private void runPluginStartupTasks() {
-
         serverVersion = Bukkit.getServer().getVersion();
         Logger.logInfo("Server version found: " + serverVersion);
 
-        if(!isQSReremakeInstalled() && !isQSHikariInstalled()) {
-            Logger.logError("QuickShop is required to use this addon. Please install QuickShop and try again!");
-            Logger.logError("Both QuickShop-Hikari and QuickShop-Reremake are supported by this addon.");
-            Logger.logError("Download links:");
+        if(!isQSHikariInstalled()) {
+            Logger.logError("QuickShop-Hikari is required to use this addon. Please install QuickShop and try again!");
+            Logger.logError("Download link:");
             Logger.logError("» QuickShop-Hikari: https://www.spigotmc.org/resources/100125");
-            Logger.logError("» QuickShop-Reremake (Support ending soon): https://www.spigotmc.org/resources/62575");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        else if(isQSReremakeInstalled()) {
-            Logger.logInfo("Found QuickShop-Reremake");
-            qsApi = new QSReremakeAPIHandler();
-            qsApi.registerSubCommand();
-        } else {
+//        else if(isQSReremakeInstalled()) {
+//            Logger.logInfo("Found QuickShop-Reremake");
+//            qsApi = new QSReremakeAPIHandler();
+//            qsApi.registerSubCommand();
+//        }
+        else {
             Logger.logInfo("Found QuickShop-Hikari");
             qsApi = new QSHikariAPIHandler();
             qsApi.registerSubCommand();
@@ -223,37 +229,23 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
 
         // Initiate batch tasks
         Logger.logInfo("Registering tasks");
-        getScheduler().runTaskTimer(new Task15MinInterval(), 1L, REPEATING_TASK_SCHEDULE_MINS);
+        FindItemAddOn.getScheduler().runTimerAsync(new Task15MinInterval(), 0, REPEATING_TASK_SCHEDULE_MINS);
 
         // init metrics
         Logger.logInfo("Registering anonymous bStats metrics");
         new Metrics(this, BS_PLUGIN_METRIC_ID);
 
         // Check for plugin updates
-        updateChecker = new UpdateChecker();
         checkForPluginUpdates();
     }
 
     private void checkForPluginUpdates() {
-//        updateChecker.getLatestVersion(version -> {
-//            if(this.getDescription().getVersion().equalsIgnoreCase(version)) {
-//                Logger.logInfo("Plugin is up to date!");
-//            } else {
-//                isPluginOutdated = true;
-//                if(version.toLowerCase().contains("snapshot")) {
-//                    Logger.logWarning("Plugin has a new snapshot version available! (Version: " + version + ")");
-//                }
-//                else {
-//                    Logger.logWarning("Plugin has a new update available! (Version: " + version + ")");
-//                }
-//                Logger.logWarning("Download here: https://www.spigotmc.org/resources/" + SPIGOT_PLUGIN_ID + "/");
-//            }
-//        });
-//        updateChecker.isUpdateAvailable(isUpdateAvailable -> {
-//            if(Boolean.TRUE.equals(isUpdateAvailable)) {
-//                isPluginOutdated = true;
-//            }
-//        });
+        updateChecker = new UpdateChecker();
+        updateChecker.isUpdateAvailable(isUpdateAvailable -> {
+            if(Boolean.TRUE.equals(isUpdateAvailable)) {
+                isPluginOutdated = true;
+            }
+        });
     }
 
     private void initCommands() {
@@ -311,13 +303,13 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
     }
 
     private void initFindItemCmd() {
-        List<String> alias;
+        List<String> aliases;
         if(StringUtils.isEmpty(FindItemAddOn.getConfigProvider().FIND_ITEM_TO_SELL_AUTOCOMPLETE)
                 || StringUtils.containsIgnoreCase(FindItemAddOn.getConfigProvider().FIND_ITEM_TO_SELL_AUTOCOMPLETE, " ")) {
-            alias = Arrays.asList("shopsearch", "searchshop", "searchitem");
+            aliases = Arrays.asList("shopsearch", "searchshop", "searchitem");
         }
         else {
-            alias = FindItemAddOn.getConfigProvider().FIND_ITEM_COMMAND_ALIAS;
+            aliases = FindItemAddOn.getConfigProvider().FIND_ITEM_COMMAND_ALIAS;
         }
 
         Class<? extends SubCommand>[] subCommands;
@@ -346,11 +338,11 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
                             commandSender.sendMessage(ColorTranslator.translateColorCodes("&#ff9933" + subCommand.getSyntax() + " &#a3a3c2" + subCommand.getDescription()));
                         }
                         commandSender.sendMessage(ColorTranslator.translateColorCodes(""));
-                        commandSender.sendMessage(ColorTranslator.translateColorCodes("&#b3b300Command alias:"));
-                        alias.forEach(alias_i -> commandSender.sendMessage(ColorTranslator.translateColorCodes("&8&l» &#2db300/" + alias_i)));
+                        commandSender.sendMessage(ColorTranslator.translateColorCodes("&#b3b300Command aliases:"));
+                        aliases.forEach(alias -> commandSender.sendMessage(ColorTranslator.translateColorCodes("&8&l» &#2db300/" + alias)));
                         commandSender.sendMessage(ColorTranslator.translateColorCodes(""));
                     },
-                    alias,
+                    aliases,
                     subCommands);
             Logger.logInfo("Registered /finditem command");
         } catch (NoSuchFieldException | IllegalAccessException e) {
@@ -387,7 +379,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
                         }
                     },
                     alias,
-                    ReloadSubCmd.class);
+                    ReloadSubCmd.class, DebugSubCmd.class);
             Logger.logInfo("Registered /finditemadmin command");
         } catch (NoSuchFieldException | IllegalAccessException e) {
             Logger.logError(e);
@@ -402,7 +394,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
         FindItemAddOn.qSHikariInstalled = qSHikariInstalled;
     }
 
-    public static QSApi getQsApiInstance() {
+    public static QSApi<?, ?> getQsApiInstance() {
         return qsApi;
     }
 
