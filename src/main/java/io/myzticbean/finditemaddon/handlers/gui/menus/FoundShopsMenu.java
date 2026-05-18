@@ -42,6 +42,8 @@ import io.myzticbean.finditemaddon.utils.warp.ResidenceUtils;
 import io.myzticbean.finditemaddon.utils.warp.WGRegionUtils;
 import io.papermc.lib.PaperLib;
 import me.kodysimpson.simpapi.colors.ColorTranslator;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -494,8 +496,6 @@ public class FoundShopsMenu extends PaginatedMenu {
      */
     private @NotNull ItemStack createShopItem(@NotNull FoundShopItemModel foundShop) {
         final ItemStack foundShopItem = foundShop.getItem();
-        final ItemMeta foundShopItemMeta = foundShopItem.getItemMeta();
-
         // Create a new ItemStack based on the shop's item
         ItemStack item = new ItemStack(foundShopItem.getType(), foundShopItem.getAmount());
         ItemMeta meta = foundShop.getItem().getItemMeta();
@@ -503,20 +503,11 @@ public class FoundShopsMenu extends PaginatedMenu {
             meta = Bukkit.getItemFactory().getItemMeta(item.getType());
         }
 
-        if (foundShopItemMeta != null) {
-            final String displayName = foundShopItemMeta.hasDisplayName() ?
-                foundShopItemMeta.getDisplayName() :
-                (foundShopItemMeta.hasItemName() ? foundShopItemMeta.getItemName() : null);
-            if (displayName != null) {
-                meta.setDisplayName(displayName);
-            }
-        }
-
-        List<String> lore = new ArrayList<>();
+        List<Component> lore = new ArrayList<>();
         // Add lore to the item
         addItemLore(lore, foundShop);
 
-        meta.setLore(lore);
+        meta.lore(lore);
         // Set location data in the item's metadata
         setLocationData(meta, foundShop);
 
@@ -535,12 +526,13 @@ public class FoundShopsMenu extends PaginatedMenu {
      * @param lore      The list to add lore to
      * @param foundShop The shop to create lore for
      */
-    private void addItemLore(List<String> lore, FoundShopItemModel foundShop) {
+    private void addItemLore(List<Component> lore, FoundShopItemModel foundShop) {
         // Add existing item lore
         ItemMeta shopItemMeta = foundShop.getItem().getItemMeta();
         if (shopItemMeta != null && shopItemMeta.hasLore()) {
-            for (String line : shopItemMeta.getLore()) {
-                lore.add(ColorTranslator.translateColorCodes(line));
+            List<Component> existingLore = shopItemMeta.lore();
+            if (existingLore != null) {
+                lore.addAll(existingLore);
             }
         }
 
@@ -548,18 +540,23 @@ public class FoundShopsMenu extends PaginatedMenu {
         for (String loreLine : configProvider.SHOP_GUI_ITEM_LORE) {
             if (loreLine.contains(ShopLorePlaceholdersEnum.NEAREST_WARP.value())) {
                 String nearestWarpInfo = getNearestWarpInfo(foundShop);
-                lore.add(ColorTranslator.translateColorCodes(
+                lore.add(deserializeLegacyLore(
                         loreLine.replace(ShopLorePlaceholdersEnum.NEAREST_WARP.value(), nearestWarpInfo)));
             } else {
-                lore.add(ColorTranslator.translateColorCodes(replaceLorePlaceholders(loreLine, foundShop)));
+                lore.add(deserializeLegacyLore(replaceLorePlaceholders(loreLine, foundShop)));
             }
         }
 
         // Add teleport info if applicable
         if (configProvider.TP_PLAYER_DIRECTLY_TO_SHOP
                 && playerMenuUtility.getOwner().hasPermission(PlayerPermsEnum.FINDITEM_SHOPTP.value())) {
-            lore.add(ColorTranslator.translateColorCodes(configProvider.CLICK_TO_TELEPORT_MSG));
+            lore.add(deserializeLegacyLore(configProvider.CLICK_TO_TELEPORT_MSG));
         }
+    }
+
+    private Component deserializeLegacyLore(String loreLine) {
+        return LegacyComponentSerializer.legacySection()
+                .deserialize(ColorTranslator.translateColorCodes(loreLine));
     }
 
     /**

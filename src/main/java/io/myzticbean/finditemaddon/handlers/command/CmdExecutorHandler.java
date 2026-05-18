@@ -23,6 +23,7 @@ import io.myzticbean.finditemaddon.FindItemAddOn;
 import io.myzticbean.finditemaddon.handlers.gui.menus.FoundShopsMenu;
 import io.myzticbean.finditemaddon.models.FoundShopItemModel;
 import io.myzticbean.finditemaddon.models.enums.PlayerPermsEnum;
+import io.myzticbean.finditemaddon.quickshop.QSApi;
 import io.myzticbean.finditemaddon.utils.async.VirtualThreadScheduler;
 import io.myzticbean.finditemaddon.utils.json.HiddenShopStorageUtil;
 import io.myzticbean.finditemaddon.utils.log.Logger;
@@ -37,7 +38,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.maxgamer.quickshop.api.shop.Shop;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Handler for different parameters of /finditem command
@@ -156,7 +160,7 @@ public class CmdExecutorHandler {
                 // If QS Hikari installed and Shop Cache feature available (>6), then run in async thread (Fix for Issue #12)
                 if(!FindItemAddOn.isQSReremakeInstalled() && FindItemAddOn.getQsApiInstance().isQSShopCacheImplemented()) {
                     VirtualThreadScheduler.runTaskAsync(() -> {
-                        List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().findItemBasedOnTypeFromAllShops(new ItemStack(mat), isBuying, player);
+                        List<FoundShopItemModel> searchResultList = this.findMaterialAndDisplayNameMatches(mat, itemArg, isBuying, player);
                         this.openShopMenu(player, searchResultList, true, FindItemAddOn.getConfigProvider().NO_SHOP_FOUND_MSG);
                     });
 //                    Bukkit.getScheduler().runTaskAsynchronously(FindItemAddOn.getInstance(), () -> {
@@ -164,7 +168,7 @@ public class CmdExecutorHandler {
 //                        this.openShopMenu(player, searchResultList, true, FindItemAddOn.getConfigProvider().NO_SHOP_FOUND_MSG);
 //                    });
                 } else {
-                    List<FoundShopItemModel> searchResultList = FindItemAddOn.getQsApiInstance().findItemBasedOnTypeFromAllShops(new ItemStack(mat), isBuying, player);
+                    List<FoundShopItemModel> searchResultList = this.findMaterialAndDisplayNameMatches(mat, itemArg, isBuying, player);
                     this.openShopMenu(player, searchResultList, false, FindItemAddOn.getConfigProvider().NO_SHOP_FOUND_MSG);
                 }
             } else {
@@ -203,6 +207,30 @@ public class CmdExecutorHandler {
                 player.sendMessage(ColorTranslator.translateColorCodes(FindItemAddOn.getConfigProvider().PLUGIN_PREFIX + errorMsg));
             }
         }
+    }
+
+    private List<FoundShopItemModel> findMaterialAndDisplayNameMatches(Material material, String itemArg, boolean isBuying, Player player) {
+        List<FoundShopItemModel> materialMatches = FindItemAddOn.getQsApiInstance()
+                .findItemBasedOnTypeFromAllShops(new ItemStack(material), isBuying, player);
+        List<FoundShopItemModel> displayNameMatches = FindItemAddOn.getQsApiInstance()
+                .findItemBasedOnDisplayNameFromAllShops(itemArg, isBuying, player);
+
+        Map<String, FoundShopItemModel> uniqueShops = new LinkedHashMap<>();
+        materialMatches.forEach(shop -> uniqueShops.put(getShopLocationKey(shop), shop));
+        displayNameMatches.forEach(shop -> uniqueShops.putIfAbsent(getShopLocationKey(shop), shop));
+
+        return QSApi.sortShops(
+                FindItemAddOn.getConfigProvider().SHOP_SORTING_METHOD,
+                new ArrayList<>(uniqueShops.values()),
+                isBuying
+        );
+    }
+
+    private String getShopLocationKey(FoundShopItemModel shop) {
+        return shop.getShopLocation().getWorld().getName()
+                + "|" + shop.getShopLocation().getX()
+                + "|" + shop.getShopLocation().getY()
+                + "|" + shop.getShopLocation().getZ();
     }
 
     private boolean checkMaterialBlacklist(Material mat) {
@@ -485,4 +513,3 @@ public class CmdExecutorHandler {
         }
     }
 }
-
