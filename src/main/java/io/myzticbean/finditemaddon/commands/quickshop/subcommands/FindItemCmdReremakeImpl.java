@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.maxgamer.quickshop.api.command.CommandHandler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -84,7 +85,7 @@ public class FindItemCmdReremakeImpl implements CommandHandler<Player> {
                 cmdExecutor.handleShopSearchWithItemInHand(args[0], commandSender);
             }
         } else {
-            cmdExecutor.handleShopSearch(args[0], commandSender, args[1]);
+            cmdExecutor.handleShopSearch(args[0], commandSender, String.join(" ", Arrays.copyOfRange(args, 1, args.length)));
         }
     }
 

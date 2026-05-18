@@ -84,12 +84,8 @@ public class BuySubCmd extends SubCommand {
     public void perform(CommandSender commandSender, String[] args) {
         if(args.length == 1) {
             cmdExecutor.handleShopSearchWithItemInHand(buySubCommand, commandSender);
-        } else if (args.length == 2) {
-            cmdExecutor.handleShopSearch(buySubCommand, commandSender, args[1]);
         } else {
-            commandSender.sendMessage(ColorTranslator.translateColorCodes(
-                    FindItemAddOn.getConfigProvider().PLUGIN_PREFIX
-                            + FindItemAddOn.getConfigProvider().FIND_ITEM_CMD_INCORRECT_USAGE_MSG));
+            cmdExecutor.handleShopSearch(buySubCommand, commandSender, String.join(" ", Arrays.copyOfRange(args, 1, args.length)));
         }
     }
 
@@ -104,4 +100,3 @@ public class BuySubCmd extends SubCommand {
         return result;
     }
 }
-
