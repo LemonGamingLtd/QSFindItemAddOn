@@ -122,10 +122,8 @@ public class QSReremakeAPIHandler implements QSApi<QuickShop, Shop> {
         for(Shop shop_i : allShops) {
             if(!FindItemAddOn.getConfigProvider().getBlacklistedWorlds().contains(shop_i.getLocation().getWorld())) {
                 if(shop_i.getItem().hasItemMeta()) {
-                    if(Objects.requireNonNull(shop_i.getItem().getItemMeta()).hasDisplayName()) {
-                        if(shop_i.getItem().getItemMeta().getDisplayName().toLowerCase().contains(displayName.toLowerCase())
-//                                && (toBuy ? getRemainingStockOrSpaceFromShopCache(shop_i, true) != 0 : getRemainingStockOrSpaceFromShopCache(shop_i, false) != 0)
-                                && (toBuy ? shop_i.isSelling() : shop_i.isBuying())) {
+                    if(QSApi.matchesDisplayNameOrEnchantments(shop_i.getItem(), displayName)
+                            && (toBuy ? shop_i.isSelling() : shop_i.isBuying())) {
                             if(checkIfShopToBeIgnoredForFullOrEmpty(toBuy, shop_i))
                                 continue;
                             // check for shop if hidden
@@ -139,7 +137,6 @@ public class QSReremakeAPIHandler implements QSApi<QuickShop, Shop> {
                                         toBuy
                                 ));
                             }
-                        }
                     }
                 }
             }

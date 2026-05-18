@@ -26,14 +26,20 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -118,6 +124,66 @@ public interface QSApi<QSType, Shop> {
         if(stockOrSpace == -1)
             return Integer.MAX_VALUE;
         return stockOrSpace;
+    }
+
+    static boolean matchesDisplayNameOrEnchantments(ItemStack item, String query) {
+        String normalizedQuery = normalizeSearchText(query);
+        if (normalizedQuery.isEmpty()) {
+            return false;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null && meta.hasDisplayName()
+                && normalizeSearchText(meta.getDisplayName()).contains(normalizedQuery)) {
+            return true;
+        }
+
+        return getSearchableEnchantments(item).stream()
+                .map(QSApi::normalizeSearchText)
+                .anyMatch(enchantment -> enchantment.contains(normalizedQuery));
+    }
+
+    private static List<String> getSearchableEnchantments(ItemStack item) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return List.of();
+        }
+
+        Map<Enchantment, Integer> enchantments = meta instanceof EnchantmentStorageMeta storageMeta
+                ? storageMeta.getStoredEnchants()
+                : meta.getEnchants();
+        List<String> names = new ArrayList<>();
+        enchantments.forEach((enchantment, level) -> {
+            String name = enchantment.getKey().getKey().replace('_', ' ');
+            names.add(name);
+            names.add(name + " " + level);
+            names.add(name + " " + toRomanNumeral(level));
+        });
+        names.sort(String::compareToIgnoreCase);
+        return names;
+    }
+
+    private static String normalizeSearchText(String text) {
+        return org.bukkit.ChatColor.stripColor(text)
+                .replace('_', ' ')
+                .toLowerCase(Locale.ROOT);
+    }
+
+    private static String toRomanNumeral(int number) {
+        if (number <= 0) {
+            return String.valueOf(number);
+        }
+
+        int[] values = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
+        String[] numerals = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < values.length; i++) {
+            while (number >= values[i]) {
+                result.append(numerals[i]);
+                number -= values[i];
+            }
+        }
+        return result.toString();
     }
 
     /**

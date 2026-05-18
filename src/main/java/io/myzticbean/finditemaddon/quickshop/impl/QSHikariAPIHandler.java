@@ -176,9 +176,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
                     // check for blacklisted worlds
                     && !FindItemAddOn.getConfigProvider().getBlacklistedWorlds().contains(shopIterator.getLocation().getWorld())
                     // match the item based on query
-                    && shopIterator.getItem().hasItemMeta()
-                    && Objects.requireNonNull(shopIterator.getItem().getItemMeta()).hasDisplayName()
-                    && (shopIterator.getItem().getItemMeta().getDisplayName().toLowerCase().contains(displayName.toLowerCase())
+                    && (QSApi.matchesDisplayNameOrEnchantments(shopIterator.getItem(), displayName)
                     && (toBuy ? shopIterator.isSelling() : shopIterator.isBuying()))
                     // check for shop if hidden
                     && !HiddenShopStorageUtil.isShopHidden(shopIterator)) {
