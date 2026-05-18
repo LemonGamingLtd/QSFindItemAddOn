@@ -132,6 +132,10 @@ public interface QSApi<QSType, Shop> {
             return false;
         }
 
+        if (normalizeSearchText(item.getType().name()).contains(normalizedQuery)) {
+            return true;
+        }
+
         ItemMeta meta = item.getItemMeta();
         if (meta != null && meta.hasDisplayName()
                 && normalizeSearchText(meta.getDisplayName()).contains(normalizedQuery)) {
