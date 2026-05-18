@@ -43,6 +43,7 @@ import io.myzticbean.finditemaddon.utils.warp.WGRegionUtils;
 import io.papermc.lib.PaperLib;
 import me.kodysimpson.simpapi.colors.ColorTranslator;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
@@ -63,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -556,7 +558,8 @@ public class FoundShopsMenu extends PaginatedMenu {
 
     private Component deserializeLegacyLore(String loreLine) {
         return LegacyComponentSerializer.legacySection()
-                .deserialize(ColorTranslator.translateColorCodes(loreLine));
+                .deserialize(ColorTranslator.translateColorCodes(loreLine))
+                .decoration(TextDecoration.ITALIC, false);
     }
 
     /**
@@ -642,19 +645,15 @@ public class FoundShopsMenu extends PaginatedMenu {
     private @NotNull String replaceLorePlaceholders(String text, @NotNull FoundShopItemModel shop) {
         text = text.replace(ShopLorePlaceholdersEnum.ITEM_PRICE.value(), formatNumber(shop.getShopPrice()));
 
-        //if (text.contains(ShopLorePlaceholdersEnum.SHOP_STOCK.value())) {
-        //    int stock = shop.getRemainingStockOrSpace();
-        //    String stockText;
-        //    if (stock == -2) {
-        //        // if -2 (cache doesn't have value) -> try to fetch from MAIN thread
-        //        int stockOrSpace = processUnknownStockSpace(shop);
-        //        stockText = (stockOrSpace == -2) ? SHOP_STOCK_UNKNOWN
-        //                : (stockOrSpace == -1 ? SHOP_STOCK_UNLIMITED : String.valueOf(stockOrSpace));
-        //    } else {
-        //        stockText = (stock == Integer.MAX_VALUE) ? SHOP_STOCK_UNLIMITED : String.valueOf(stock);
-        //    }
-        //    text = text.replace(ShopLorePlaceholdersEnum.SHOP_STOCK.value(), stockText);
-        //}
+        if (text.contains(ShopLorePlaceholdersEnum.SHOP_STOCK.value())) {
+            int stock = shop.getRemainingStockOrSpace();
+            String stockText = switch (stock) {
+                case -2 -> SHOP_STOCK_UNKNOWN;
+                case Integer.MAX_VALUE -> SHOP_STOCK_UNLIMITED;
+                default -> String.format(Locale.US, "%,d", stock);
+            };
+            text = text.replace(ShopLorePlaceholdersEnum.SHOP_STOCK.value(), stockText);
+        }
 
         text = text.replace(ShopLorePlaceholdersEnum.SHOP_PER_ITEM_QTY.value(),
                 String.valueOf(shop.getItem().getAmount()));
@@ -693,19 +692,25 @@ public class FoundShopsMenu extends PaginatedMenu {
     private String formatNumber(double number) {
         if (configProvider.SHOP_GUI_USE_SHORTER_CURRENCY_FORMAT) {
             if (number < 100_000) {
-                return String.format("%,.2f", number);
+                return formatCompactNumber(number);
             } else if (number < 1_000_000) {
-                return String.format("%.2fK", number / 1_000.0);
+                return formatCompactNumber(number / 1_000.0) + "k";
             } else if (number < 1_000_000_000) {
-                return String.format("%.2fM", number / 1_000_000.0);
+                return formatCompactNumber(number / 1_000_000.0) + "m";
             } else if (number < 1_000_000_000_000L) {
-                return String.format("%.2fB", number / 1_000_000_000.0);
+                return formatCompactNumber(number / 1_000_000_000.0) + "b";
             } else {
-                return String.format("%.2fT", number / 1_000_000_000_000.0);
+                return formatCompactNumber(number / 1_000_000_000_000.0) + "t";
             }
         } else {
-            return String.format("%,.2f", number);
+            return formatCompactNumber(number);
         }
+    }
+
+    private String formatCompactNumber(double number) {
+        return String.format(Locale.US, "%,.2f", number)
+                .replaceAll("\\.00$", "")
+                .replaceAll("(\\.\\d)0$", "$1");
     }
 
     private String replaceCustomCmdPlaceholders(String cmd, Player player, Location shopLoc) {
