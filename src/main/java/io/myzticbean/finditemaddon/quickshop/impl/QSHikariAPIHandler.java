@@ -52,7 +52,9 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -86,6 +88,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
         var begin = Instant.now();
         List<FoundShopItemModel> shopsFoundList = new ArrayList<>();
         List<Shop> allShops = fetchAllShopsFromQS();
+        Map<Long, Integer> stockOrSpaceByShopId = fetchStockOrSpaceCacheForSearch(toBuy);
         Logger.logDebugInfo(QS_TOTAL_SHOPS_ON_SERVER + allShops.size());
         for(Shop shopIterator : allShops) {
             // check for quickshop hikari internal per-shop based search permission
@@ -97,7 +100,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
                     && (toBuy ? shopIterator.isSelling() : shopIterator.isBuying()))
                     // check for shop if hidden
                     && (!HiddenShopStorageUtil.isShopHidden(shopIterator))) {
-                processPotentialShopMatchAndAddToFoundList(toBuy, shopIterator, shopsFoundList, searchingPlayer);
+                processPotentialShopMatchAndAddToFoundList(toBuy, shopIterator, shopsFoundList, searchingPlayer, stockOrSpaceByShopId);
             }
         }
         List<FoundShopItemModel> sortedShops = handleShopSorting(toBuy, shopsFoundList);
@@ -164,6 +167,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
         var begin = Instant.now();
         List<FoundShopItemModel> shopsFoundList = new ArrayList<>();
         List<Shop> allShops = fetchAllShopsFromQS();
+        Map<Long, Integer> stockOrSpaceByShopId = fetchStockOrSpaceCacheForSearch(toBuy);
         Logger.logDebugInfo(QS_TOTAL_SHOPS_ON_SERVER + allShops.size());
         for(Shop shopIterator : allShops) {
             // check for quickshop hikari internal per-shop based search permission
@@ -178,7 +182,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
                     && (toBuy ? shopIterator.isSelling() : shopIterator.isBuying()))
                     // check for shop if hidden
                     && !HiddenShopStorageUtil.isShopHidden(shopIterator)) {
-                processPotentialShopMatchAndAddToFoundList(toBuy, shopIterator, shopsFoundList, searchingPlayer);
+                processPotentialShopMatchAndAddToFoundList(toBuy, shopIterator, shopsFoundList, searchingPlayer, stockOrSpaceByShopId);
             }
         }
         List<FoundShopItemModel> sortedShops = handleShopSorting(toBuy, shopsFoundList);
@@ -191,6 +195,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
         var begin = Instant.now();
         List<FoundShopItemModel> shopsFoundList = new ArrayList<>();
         List<Shop> allShops = fetchAllShopsFromQS();
+        Map<Long, Integer> stockOrSpaceByShopId = fetchStockOrSpaceCacheForSearch(toBuy);
         Logger.logDebugInfo(QS_TOTAL_SHOPS_ON_SERVER + allShops.size());
         for(Shop shopIterator : allShops) {
             // check for quickshop hikari internal per-shop based search permission
@@ -201,7 +206,7 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
                     && (toBuy ? shopIterator.isSelling() : shopIterator.isBuying()))
                     // check for shop if hidden
                     && (!HiddenShopStorageUtil.isShopHidden(shopIterator))) {
-                processPotentialShopMatchAndAddToFoundList(toBuy, shopIterator, shopsFoundList, searchingPlayer);
+                processPotentialShopMatchAndAddToFoundList(toBuy, shopIterator, shopsFoundList, searchingPlayer, stockOrSpaceByShopId);
             }
         }
         List<FoundShopItemModel> sortedShops = new ArrayList<>(shopsFoundList);
@@ -461,7 +466,27 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
         return mainVersion >= 6;
     }
 
-    private void processPotentialShopMatchAndAddToFoundList(boolean toBuy, Shop shopIterator, List<FoundShopItemModel> shopsFoundList, Player searchingPlayer) {
+    private Map<Long, Integer> fetchStockOrSpaceCacheForSearch(boolean toBuy) {
+        Map<Long, Integer> stockOrSpaceByShopId = new HashMap<>();
+        if (!isQSHikariShopCacheImplemented) {
+            return stockOrSpaceByShopId;
+        }
+
+        String column = toBuy ? "stock" : "space";
+        try (SQLQuery query = DataTables.EXTERNAL_CACHE.createQuery()
+                .selectColumns("shop", column)
+                .build()
+                .execute(); ResultSet resultSet = query.getResultSet()) {
+            while (resultSet.next()) {
+                stockOrSpaceByShopId.put(resultSet.getLong("shop"), resultSet.getInt(column));
+            }
+        } catch (SQLException e) {
+            Logger.logError("Failed to bulk-load QuickShop inventory cache", e);
+        }
+        return stockOrSpaceByShopId;
+    }
+
+    private void processPotentialShopMatchAndAddToFoundList(boolean toBuy, Shop shopIterator, List<FoundShopItemModel> shopsFoundList, Player searchingPlayer, Map<Long, Integer> stockOrSpaceByShopId) {
         Logger.logDebugInfo("Shop match found: " + shopIterator.getLocation());
         // Check if shop is in a locked BentoBox island
         if (FindItemAddOn.getConfigProvider().BENTOBOX_IGNORE_LOCKED_ISLAND_SHOPS &&
@@ -471,7 +496,9 @@ public class QSHikariAPIHandler implements QSApi<QuickShop, Shop> {
             return;
             }
         // check for stock / space
-        int stockOrSpace = (toBuy ? getRemainingStockOrSpaceFromShopCache(shopIterator, true)
+        int stockOrSpace = isQSHikariShopCacheImplemented
+                ? stockOrSpaceByShopId.getOrDefault(shopIterator.getShopId(), -2)
+                : (toBuy ? getRemainingStockOrSpaceFromShopCache(shopIterator, true)
                 : getRemainingStockOrSpaceFromShopCache(shopIterator, false));
         if(isShopToBeIgnoredForFullOrEmpty(stockOrSpace)) {
             return;
