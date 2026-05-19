@@ -40,7 +40,6 @@ import io.myzticbean.finditemaddon.utils.warp.EssentialWarpsUtil;
 import io.myzticbean.finditemaddon.utils.warp.PlayerWarpsUtil;
 import io.myzticbean.finditemaddon.utils.warp.ResidenceUtils;
 import io.myzticbean.finditemaddon.utils.warp.WGRegionUtils;
-import io.papermc.lib.PaperLib;
 import me.kodysimpson.simpapi.colors.ColorTranslator;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -209,46 +208,47 @@ public class FoundShopsMenu extends PaginatedMenu {
         }
 
         shopLocation.thenAccept(location -> {
-        if (location == null)
-            return;
+            if (location == null)
+                return;
 
-        // Check if player is teleporting to their own shop
-        UUID shopOwner = ShopSearchActivityStorageUtil.getShopOwnerUUID(location);
-        if (player.getUniqueId().equals(shopOwner) && !PlayerPermsEnum.canPlayerTpToOwnShop(player)) {
-            player.sendMessage(ColorTranslator.translateColorCodes(
-                    configProvider.PLUGIN_PREFIX + configProvider.SHOP_TP_NO_PERMISSION_MSG));
-            return;
-        }
+            // Check if player is teleporting to their own shop
+            UUID shopOwner = ShopSearchActivityStorageUtil.getShopOwnerUUID(location);
+            if (player.getUniqueId().equals(shopOwner) && !PlayerPermsEnum.canPlayerTpToOwnShop(player)) {
+                player.sendMessage(ColorTranslator.translateColorCodes(
+                        configProvider.PLUGIN_PREFIX + configProvider.SHOP_TP_NO_PERMISSION_MSG));
+                return;
+            }
 
-        boolean isBanned = GPFlagsPlugin.isPlayerBannedFromClaim(player, location);
-        if (isBanned) {
-            sendBannedFromClaimMessage(player);
-            return;
-        }
+            boolean isBanned = GPFlagsPlugin.isPlayerBannedFromClaim(player, location);
+            if (isBanned) {
+                sendBannedFromClaimMessage(player);
+                return;
+            }
 
-        FindItemAddOn.getInstance().getScheduler().runTaskAtLocation(location, () -> {
-        // Find a safe location around the shop
-        Location locToTeleport = LocationUtils.findSafeLocationAroundShop(location, player);
-        if (locToTeleport == null) {
-            Logger.logDebugInfo("[SafeTP] Sending unsafe area message to player " + player.getName() 
-                    + " for shop at " + location.getWorld().getName() + " " 
-                    + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
-            sendUnsafeAreaMessage(player);
-            return;
-        }
+            FindItemAddOn.getInstance().getScheduler().runTaskAtLocation(location, () -> {
+                // Find a safe location around the shop
+                Location locToTeleport = LocationUtils.findSafeLocationAroundShop(location, player);
+                if (locToTeleport == null) {
+                    Logger.logDebugInfo("[SafeTP] Sending unsafe area message to player " + player.getName()
+                            + " for shop at " + location.getWorld().getName() + " "
+                            + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ());
+                    sendUnsafeAreaMessage(player);
+                    return;
+                }
 
-        // Record the visit and set last location for Essentials
-        ShopSearchActivityStorageUtil.addPlayerVisitEntryAsync(location, player);
-        if (EssentialsXPlugin.isEnabled())
-            EssentialsXPlugin.setLastLocation(player);
+                // Record the visit and set last location for Essentials
+                ShopSearchActivityStorageUtil.addPlayerVisitEntryAsync(location, player);
+                if (EssentialsXPlugin.isEnabled())
+                    EssentialsXPlugin.setLastLocation(player);
 
-        // Apply teleport delay if necessary, otherwise teleport immediately
-        if (shouldApplyTeleportDelay(player)) {
-            applyTeleportDelay(player, locToTeleport);
-        } else {
-            PaperLib.teleportAsync(player, locToTeleport, PlayerTeleportEvent.TeleportCause.PLUGIN);
-        }
-        });
+                // Apply teleport delay if necessary, otherwise teleport immediately
+                if (shouldApplyTeleportDelay(player)) {
+                    applyTeleportDelay(player, locToTeleport);
+                } else {
+                    FindItemAddOn.getInstance().getFoliaLib().getScheduler()
+                            .teleportAsync(player, locToTeleport, PlayerTeleportEvent.TeleportCause.PLUGIN);
+                }
+            });
         });
     }
 
@@ -369,7 +369,8 @@ public class FoundShopsMenu extends PaginatedMenu {
                     configProvider.PLUGIN_PREFIX + replaceDelayPlaceholder(tpDelayMsg, delay)));
         }
         FindItemAddOn.getInstance().getScheduler().runTaskLater(
-            () -> PaperLib.teleportAsync(player, locToTeleport, PlayerTeleportEvent.TeleportCause.PLUGIN),
+            () -> FindItemAddOn.getInstance().getFoliaLib().getScheduler()
+                    .teleportAsync(player, locToTeleport, PlayerTeleportEvent.TeleportCause.PLUGIN),
             delay * 20);
     }
 

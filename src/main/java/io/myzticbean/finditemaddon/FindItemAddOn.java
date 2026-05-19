@@ -18,6 +18,7 @@
  */
 package io.myzticbean.finditemaddon;
 
+import com.tcoded.folialib.FoliaLib;
 import io.myzticbean.finditemaddon.commands.simpapi.BuySubCmd;
 import io.myzticbean.finditemaddon.commands.simpapi.HideShopSubCmd;
 import io.myzticbean.finditemaddon.commands.simpapi.ReloadSubCmd;
@@ -106,6 +107,8 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
     private static QSApi qsApi;
     @Getter
     private static BentoBoxPlugin bentoboxPlugin;
+    @Getter
+    private FoliaLib foliaLib;
 
     private static final HashMap<Player, PlayerMenuUtility> playerMenuUtilityMap = new HashMap<>();
 
@@ -121,6 +124,7 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
     }
     @Override
     public void onEnable() {
+        foliaLib = new FoliaLib(this);
 
         if(ENABLE_TRIAL_PERIOD) {
             Logger.logWarning("THIS IS A TRIAL BUILD!");
@@ -177,6 +181,9 @@ public final class FindItemAddOn extends FoliaWrappedJavaPlugin {
             Logger.logError("Uh oh! Looks like either this plugin has crashed or you don't have QuickShop-Hikari or QuickShop-Reremake installed.");
         }
         VirtualThreadScheduler.shutdown();
+        if (foliaLib != null) {
+            foliaLib.getScheduler().cancelAllTasks();
+        }
         Logger.logInfo("Bye!");
     }
 

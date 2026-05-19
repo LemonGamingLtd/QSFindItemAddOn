@@ -89,8 +89,8 @@
                                     </excludes>
                                 </relocation>
                                 <relocation>
-                                    <pattern>io.papermc.lib</pattern>
-                                    <shadedPattern>${project.groupId}.libs.paperlib</shadedPattern>
+                                    <pattern>com.tcoded.folialib</pattern>
+                                    <shadedPattern>${project.groupId}.libs.folialib</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>com.fasterxml</pattern>
@@ -158,6 +158,10 @@
             <url>https://jitpack.io</url>
         </repository>
         <repository>
+            <id>tcoded-releases</id>
+            <url>https://repo.tcoded.com/releases</url>
+        </repository>
+        <repository>
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
@@ -219,9 +223,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.papermc</groupId>
-            <artifactId>paperlib</artifactId>
-            <version>1.0.7</version>
+            <groupId>com.tcoded</groupId>
+            <artifactId>FoliaLib</artifactId>
+            <version>0.5.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
